@@ -207,3 +207,54 @@ export async function carreira(ufsValidas, datas) {
   }
   return gravar("mandatos", mandatos, (l) => `${l.parlamentar_id}|${l.legislatura}`, "parlamentar_id,legislatura");
 }
+
+// Autoria de projetos: serviço novo /processo (o antigo /senador/{codigo}/autorias foi desativado em 2026).
+// Só projetos com efeito de lei (requerimentos, licenças, votos de pesar etc. ficam de fora, como na Câmara).
+const DOCUMENTOS = new Set([
+  "Projeto de Lei Ordinária",
+  "Projeto de Lei Complementar",
+  "Proposta de Emenda à Constituição",
+  "Projeto de Decreto Legislativo",
+  "Projeto de Resolução",
+]);
+
+// Quem aparece primeiro no campo "autoria" é o autor principal; os demais, coautores.
+function papel(autoria, nome) {
+  const texto = (autoria ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const alvo = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return /^senador(a)?\s/.test(texto) && texto.replace(/^senador(a)?\s+/, "").startsWith(alvo) ? "autor" : "coautor";
+}
+
+export async function autorias({ desde = null } = {}) {
+  const { data: senadores, error } = await db.from("parlamentares").select("id, id_fonte, nome_parlamentar").eq("casa", "senado");
+  if (error) throw new Error(`parlamentares: ${error.message}`);
+
+  const proposicoes = new Map();
+  const autoriasLista = [];
+  for (const s of senadores) {
+    const filtro = desde ? `&dataInicioApresentacao=${desde}` : "";
+    const lista_ = (await baixarJson(`${S}/processo?codigoParlamentarAutor=${s.id_fonte}${filtro}`)) ?? [];
+    for (const p of lista_) {
+      if (!DOCUMENTOS.has(p.tipoDocumento) || !p.codigoMateria) continue;
+      const m = /^([A-Z]+)\s+(\d+)\/(\d{4})/.exec(p.identificacao ?? "");
+      if (!m) continue;
+      const id = `S-${p.codigoMateria}`;
+      proposicoes.set(id, {
+        id,
+        casa: "senado",
+        tipo: m[1],
+        numero: Number(m[2]),
+        ano: Number(m[3]),
+        ementa: (p.ementa || p.identificacao).replace(/\s+/g, " ").trim(),
+        situacao: [p.situacaoAtual, p.normaGerada].filter(Boolean).join(" · "),
+        apresentada_em: p.dataApresentacao || `${m[3]}-01-01`,
+        fonte_url: MATERIA(p.codigoMateria),
+      });
+      autoriasLista.push({ proposicao_id: id, parlamentar_id: s.id, papel: papel(p.autoria, s.nome_parlamentar), fonte_url: MATERIA(p.codigoMateria) });
+    }
+  }
+  // Proposições: atualiza ementa e situação sem tocar no resumo automático
+  let n = await gravar("proposicoes", [...proposicoes.values()], (l) => l.id, "id");
+  n += await gravar("autorias", autoriasLista, (l) => `${l.proposicao_id}|${l.parlamentar_id}`, "proposicao_id,parlamentar_id");
+  return n;
+}

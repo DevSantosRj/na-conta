@@ -3,6 +3,7 @@
 //   ANOS=2025,2026 node scripts/coleta/index.mjs  → só esses anos
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
+//   FONTES=senado-autorias                        → autoria de projetos dos senadores, carreira inteira
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
@@ -45,7 +46,12 @@ if (fontes.includes("proposicoes")) {
 if (fontes.includes("senado")) {
   await etapa("senado:senadores", senado.senadores);
   for (const ano of anos) await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
+  // Rodada diária: só projetos apresentados nos últimos 90 dias
+  const desde = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  await etapa("senado:autorias", () => senado.autorias({ desde }));
 }
+// Carga completa da autoria de projetos dos senadores (toda a carreira no Senado)
+if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", () => senado.autorias());
 
 if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
 
