@@ -4,10 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-    paths: ["scripts/sonda.mjs"]
+    paths: ["scripts/sonda.mjs", ".github/workflows/sonda.yml"]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   sonda:
@@ -18,4 +18,13 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - run: node scripts/sonda.mjs
+      - run: node scripts/sonda.mjs | tee sonda-resultado.txt
+      # Guarda o resultado no ramo "sonda" (fora do main, não dispara deploy)
+      - run: |
+          git config user.name "na-conta-sonda"
+          git config user.email "na-conta-sonda@users.noreply.github.com"
+          git checkout --orphan sonda
+          git rm -rfq --cached .
+          git add sonda-resultado.txt
+          git commit -qm "Resultado da sonda $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin sonda
