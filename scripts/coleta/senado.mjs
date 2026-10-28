@@ -238,6 +238,8 @@ export async function autorias({ desde = null } = {}) {
     const lista_ = (await baixarJson(`${S}/processo?codigoParlamentarAutor=${s.id_fonte}${filtro}`)) ?? [];
     for (const p of lista_) {
       if (!DOCUMENTOS.has(p.tipoDocumento) || !p.codigoMateria) continue;
+      // Projeto vindo da Câmara (autoria "Câmara dos Deputados"): a fonte não diz quem o escreveu; fica de fora.
+      if (/^c[âa]mara dos deputados/i.test(p.autoria ?? "")) continue;
       const m = /^([A-Z]+)\s+(\d+)\/(\d{4})/.exec(p.identificacao ?? "");
       if (!m) continue;
       const id = `S-${p.codigoMateria}`;
@@ -258,5 +260,20 @@ export async function autorias({ desde = null } = {}) {
   // Proposições: atualiza ementa e situação sem tocar no resumo automático
   let n = await gravar("proposicoes", [...proposicoes.values()], (l) => l.id, "id");
   n += await gravar("autorias", autoriasLista, (l) => `${l.proposicao_id}|${l.parlamentar_id}`, "proposicao_id,parlamentar_id");
+
+  // Carga completa: o que a fonte oficial não lista mais para o senador sai do banco
+  if (!desde) {
+    const atuais = new Set(autoriasLista.map((a) => `${a.proposicao_id}|${a.parlamentar_id}`));
+    for (const s of senadores) {
+      const { data: gravadas, error: e1 } = await db.from("autorias").select("proposicao_id").eq("parlamentar_id", s.id);
+      if (e1) throw new Error(`autorias: ${e1.message}`);
+      const sobrando = gravadas.map((g) => g.proposicao_id).filter((p) => !atuais.has(`${p}|${s.id}`));
+      if (sobrando.length) {
+        const { error: e2 } = await db.from("autorias").delete().eq("parlamentar_id", s.id).in("proposicao_id", sobrando);
+        if (e2) throw new Error(`autorias: ${e2.message}`);
+        console.log(`  ${s.nome_parlamentar}: ${sobrando.length} autoria(s) fora da lista oficial removida(s)`);
+      }
+    }
+  }
   return n;
 }
