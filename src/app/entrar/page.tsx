@@ -6,13 +6,22 @@ import styles from "./entrar.module.css";
 
 export const metadata: Metadata = { title: "Entrar" };
 
-async function AvisoLinkExpirado({ searchParams }: { searchParams: PageProps<"/entrar">["searchParams"] }) {
-  const { erro } = await searchParams;
-  if (erro !== "link") return null;
+// Só aceita caminhos internos (ex.: /parlamentar/C-123) como destino depois do login.
+function destinoSeguro(valor: unknown) {
+  return typeof valor === "string" && valor.startsWith("/") && !valor.startsWith("//") ? valor : "/alertas";
+}
+
+async function Conteudo({ searchParams }: { searchParams: PageProps<"/entrar">["searchParams"] }) {
+  const { erro, proximo } = await searchParams;
   return (
-    <p className={styles.erro} role="alert">
-      Esse link expirou ou já foi usado. Peça outro abaixo.
-    </p>
+    <>
+      {erro === "link" && (
+        <p className={styles.erro} role="alert">
+          Esse link expirou ou já foi usado. Peça outro abaixo.
+        </p>
+      )}
+      <Formulario proximo={destinoSeguro(proximo)} />
+    </>
   );
 }
 
@@ -26,10 +35,9 @@ export default function Entrar({ searchParams }: PageProps<"/entrar">) {
       <p className={styles.texto}>
         Sem senha: digite seu e-mail e enviamos um link de acesso. Você escolhe depois se quer o resumo diário ou semanal.
       </p>
-      <Suspense fallback={null}>
-        <AvisoLinkExpirado searchParams={searchParams} />
+      <Suspense fallback={<div className={styles.form} style={{ minHeight: 240 }} />}>
+        <Conteudo searchParams={searchParams} />
       </Suspense>
-      <Formulario />
     </main>
   );
 }

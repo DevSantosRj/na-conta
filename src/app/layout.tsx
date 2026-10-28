@@ -10,6 +10,9 @@ import "@fontsource/ibm-plex-serif/400.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000",
+  ),
   title: {
     default: "Na Conta — o Brasil na ponta do lápis",
     template: "%s · Na Conta",

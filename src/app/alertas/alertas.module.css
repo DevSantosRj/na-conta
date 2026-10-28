@@ -63,6 +63,33 @@
   cursor: pointer;
 }
 
+.seguidos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.seguidos li {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.seguidos li:last-child {
+  border-bottom: 0;
+}
+
+.seguidos a {
+  font-weight: 600;
+  color: var(--cor-texto);
+}
+
+.seguidos span {
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}
+
 .esqueleto {
   height: 180px;
   border-radius: var(--raio-cartao);

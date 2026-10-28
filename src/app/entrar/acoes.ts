@@ -10,6 +10,8 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export async function enviarLink(_anterior: EstadoEnvio, dados: FormData): Promise<EstadoEnvio> {
   const email = String(dados.get("email") ?? "").trim().toLowerCase();
   const aceite = dados.get("aceite") === "on";
+  const pedido = String(dados.get("proximo") ?? "");
+  const proximo = pedido.startsWith("/") && !pedido.startsWith("//") ? pedido : "/alertas";
 
   if (!EMAIL.test(email)) return { ok: false, mensagem: "Digite um e-mail válido.", email };
   if (!aceite) return { ok: false, mensagem: "Para receber alertas, aceite a política de privacidade.", email };
@@ -19,7 +21,7 @@ export async function enviarLink(_anterior: EstadoEnvio, dados: FormData): Promi
   const supabase = await supabaseServidor();
   const { error } = await supabase.auth.signInWithOtp({
     email,
-    options: { emailRedirectTo: `${origem}/auth/confirmar`, shouldCreateUser: true },
+    options: { emailRedirectTo: `${origem}/auth/confirmar?proximo=${encodeURIComponent(proximo)}`, shouldCreateUser: true },
   });
 
   if (error) {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { MapaBrasil } from "@/components/MapaBrasil";
 import styles from "./page.module.css";
 
@@ -54,6 +55,14 @@ export default function Inicio() {
             Gastos, emendas, votos e impostos de quem representa você em Brasília. Cada número com a fonte
             oficial ao lado. A conclusão é sua.
           </p>
+          <div className={styles.chamadas}>
+            <Link href="/parlamentares" className={styles.chamada}>
+              Ver como cada parlamentar votou
+            </Link>
+            <Link href="/alertas" className={styles.chamadaSecundaria}>
+              Meus alertas
+            </Link>
+          </div>
         </section>
 
         <section className={styles.conteudo} aria-labelledby="mapa-titulo">

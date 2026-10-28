@@ -87,6 +87,40 @@
   color: var(--cor-texto-2);
 }
 
+.chamadas {
+  margin-top: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chamada,
+.chamadaSecundaria {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 20px;
+  border-radius: var(--raio);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.chamada {
+  background: var(--cor-principal);
+  color: #ffffff;
+}
+
+.chamada:hover {
+  color: #ffffff;
+}
+
+.chamadaSecundaria {
+  background: #ffffff;
+  border: 1px solid var(--cor-borda-forte);
+  color: var(--cor-texto);
+}
+
 /* Cartão do mapa */
 .cartaoMapa {
   display: flex;

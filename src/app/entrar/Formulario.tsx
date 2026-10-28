@@ -6,7 +6,7 @@ import styles from "./entrar.module.css";
 
 const inicial: EstadoEnvio = { ok: false, mensagem: "" };
 
-export function Formulario() {
+export function Formulario({ proximo }: { proximo: string }) {
   const [estado, enviar, enviando] = useActionState(enviarLink, inicial);
 
   if (estado.ok) {
@@ -19,6 +19,7 @@ export function Formulario() {
 
   return (
     <form action={enviar} className={styles.form} noValidate>
+      <input type="hidden" name="proximo" value={proximo} />
       <label htmlFor="email" className={styles.rotulo}>
         Seu e-mail
       </label>

@@ -17,7 +17,14 @@ async function MinhaConta() {
   if (!user) redirect("/entrar");
 
   const { data: perfil } = await supabase.from("perfis").select("frequencia").eq("user_id", user.id).single();
-  const { count } = await supabase.from("seguindo").select("parlamentar_id", { count: "exact", head: true });
+  const { data: seguidos } = await supabase
+    .from("seguindo")
+    .select("parlamentar_id, parlamentares(nome_parlamentar, casa, uf, partido_atual)")
+    .order("desde", { ascending: false });
+  const lista = (seguidos ?? []) as unknown as {
+    parlamentar_id: string;
+    parlamentares: { nome_parlamentar: string; casa: string; uf: string; partido_atual: string | null };
+  }[];
 
   return (
     <>
@@ -53,10 +60,22 @@ async function MinhaConta() {
         <h2 id="seguindo" className={proprio.h2}>
           Quem você segue
         </h2>
-        {count ? (
-          <p className={styles.texto}>{count} parlamentar(es).</p>
+        {lista.length ? (
+          <ul className={proprio.seguidos}>
+            {lista.map((s) => (
+              <li key={s.parlamentar_id}>
+                <Link href={`/parlamentar/${s.parlamentar_id}`}>{s.parlamentares.nome_parlamentar}</Link>
+                <span>
+                  {s.parlamentares.casa === "camara" ? "Deputado(a)" : "Senador(a)"} · {s.parlamentares.uf}
+                  {s.parlamentares.partido_atual ? ` · ${s.parlamentares.partido_atual}` : ""}
+                </span>
+              </li>
+            ))}
+          </ul>
         ) : (
-          <p className={styles.texto}>Você ainda não segue ninguém. As páginas de cada parlamentar chegam na próxima etapa.</p>
+          <p className={styles.texto}>
+            Você ainda não segue ninguém. <Link href="/parlamentares">Encontre um parlamentar</Link> e toque em &quot;Me avise quando votar&quot;.
+          </p>
         )}
       </section>
 
