@@ -181,7 +181,11 @@ async function Conteudo({ params, searchParams }: Props) {
         )}
         <Paginacao id={id} aba={aba} pagina={pagina} total={total} />
         <p className={ui.fonte}>
-          {numero(total)} proposições · PL, PLP, PEC, PDL, PRC, MPV e PLV · Fonte: dados abertos da Câmara e do Senado.
+          {numero(total)} proposições ·{" "}
+          {id.startsWith("S-")
+            ? "PL, PLS, PLP, PEC, PDL, PDS, PRS e PRN · fonte: dados abertos do Senado (projetos vindos da Câmara não entram)"
+            : "PL, PLP, PEC, PDL, PDC, PRC, MPV e PLV · fonte: dados abertos da Câmara"}
+          .
         </p>
       </>
     );
