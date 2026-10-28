@@ -96,7 +96,10 @@ export async function votacoes(ano) {
       if (v.votacaoSecreta === "S" || !Array.isArray(v.votos) || !v.votos.length) continue;
       const id = `S-${v.codigoSessaoVotacao}`;
       let proposicaoId = null;
-      if (v.codigoMateria && v.sigla && v.numero && v.ano) {
+      // Matérias antigas às vezes trazem número ou ano fora do formato numérico: ficam sem vínculo.
+      const numeroOk = Number.isFinite(Number(v.numero)) && Number(v.numero) > 0;
+      const anoOk = Number.isFinite(Number(v.ano)) && Number(v.ano) > 1800;
+      if (v.codigoMateria && v.sigla && numeroOk && anoOk) {
         proposicaoId = `S-${v.codigoMateria}`;
         proposicoes.push({
           id: proposicaoId,
