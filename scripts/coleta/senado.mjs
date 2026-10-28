@@ -222,7 +222,9 @@ const DOCUMENTOS = new Set([
 function papel(autoria, nome) {
   const texto = (autoria ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const alvo = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-  return /^senador(a)?\s/.test(texto) && texto.replace(/^senador(a)?\s+/, "").startsWith(alvo) ? "autor" : "coautor";
+  // "Senador(a) Fulano" ou, em projeto da época de deputado, "Deputado(a) Federal Fulano"
+  const PREFIXO = /^(senador|senadora|deputado|deputada)(\s+federal)?\s+/;
+  return PREFIXO.test(texto) && texto.replace(PREFIXO, "").startsWith(alvo) ? "autor" : "coautor";
 }
 
 export async function autorias({ desde = null } = {}) {
