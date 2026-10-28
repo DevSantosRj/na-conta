@@ -102,6 +102,8 @@ export async function votosDoParlamentar(id: string, pagina: number) {
     .order("data", { ascending: false })
     .order("votacao_id", { ascending: false })
     .range(de, de + POR_PAGINA - 1);
+  // Página além do fim (ex.: link antigo com ?pagina=999): lista vazia em vez de erro.
+  if (error?.code === "PGRST103") return { linhas: [] as LinhaVoto[], total: 0 };
   if (error) throw new Error(error.message);
   return { linhas: data as LinhaVoto[], total: count ?? 0 };
 }
@@ -131,6 +133,7 @@ export async function proposicoesDoParlamentar(id: string, pagina: number) {
     .order("apresentada_em", { ascending: false })
     .order("proposicao_id", { ascending: false })
     .range(de, de + POR_PAGINA - 1);
+  if (error?.code === "PGRST103") return { linhas: [] as LinhaProposicao[], total: 0 };
   if (error) throw new Error(error.message);
   return { linhas: data as LinhaProposicao[], total: count ?? 0 };
 }
