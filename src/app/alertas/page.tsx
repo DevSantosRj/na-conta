@@ -43,7 +43,10 @@ async function MinhaConta() {
             </button>
           ))}
         </form>
-        <p className={proprio.nota}>Só chega e-mail nos dias em que alguém que você segue votou.</p>
+        <p className={proprio.salvo} role="status">
+          ✓ Salvo: você recebe o {perfil?.frequencia === "semanal" ? "resumo semanal" : "resumo diário"}.
+        </p>
+        <p className={proprio.nota}>Só chega e-mail quando alguém que você segue votou.</p>
       </section>
 
       <section className={`${styles.form} ${proprio.secao}`} aria-labelledby="seguindo">

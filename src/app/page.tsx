@@ -2,9 +2,9 @@ import { MapaBrasil } from "@/components/MapaBrasil";
 import styles from "./page.module.css";
 
 const ETAPAS = [
-  { n: 1, nome: "Projeto no ar num link de teste", status: "em andamento" },
-  { n: 2, nome: "Banco, primeiros dados e login", status: "próxima" },
-  { n: 3, nome: "Perfil do parlamentar e alertas", status: "" },
+  { n: 1, nome: "Projeto no ar num link de teste", status: "concluída" },
+  { n: 2, nome: "Banco, primeiros dados e login", status: "concluída" },
+  { n: 3, nome: "Perfil do parlamentar e alertas", status: "em andamento" },
   { n: 4, nome: "Mapa, estados, emendas, Constituição e Meu imposto", status: "" },
   { n: 5, nome: "Erros, segurança e velocidade", status: "" },
   { n: 6, nome: "Lançamento", status: "" },
