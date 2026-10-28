@@ -1,38 +1,69 @@
-// Sonda das fontes oficiais (2ª rodada): formato do serviço novo de votações do Senado e até onde ele vai.
-// A 1ª rodada (Câmara) está registrada em docs/fontes.md.
+// Sonda das fontes oficiais (3ª rodada): listas oficiais de presidentes
+// da República, da Câmara e do Senado. Rodadas anteriores: histórico do git e docs/fontes.md.
 
-const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)", Accept: "application/json" };
-const S = "https://legis.senado.leg.br/dadosabertos";
+const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
 
-async function json(url) {
-  const r = await fetch(url, { headers: UA });
-  const t = await r.text();
+const texto = (html) =>
+  html
+    .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>|<\/(p|li|tr|h\d|div)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
+
+async function pagina(url, { links = null, max = 12000 } = {}) {
+  console.log(`\n===== ${url}`);
   try {
-    return { status: r.status, dados: JSON.parse(t) };
-  } catch {
-    return { status: r.status, texto: t.slice(0, 300) };
+    const r = await fetch(url, { headers: UA, redirect: "follow" });
+    const html = await r.text();
+    console.log(`status ${r.status} · ${html.length} bytes · final ${r.url}`);
+    const t = texto(html);
+    const ini = Math.max(0, t.search(/President/i) - 200);
+    console.log(t.slice(ini, ini + max));
+    if (links) {
+      const vistos = new Set();
+      for (const m of html.matchAll(/href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+        const href = new URL(m[1], r.url).href;
+        if (links.test(href) && !vistos.has(href)) {
+          vistos.add(href);
+          console.log(`LINK ${href} | ${texto(m[2]).slice(0, 80)}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log("falhou:", e.message);
   }
 }
 
-console.log("=== SENADO · /votacao (serviço novo) · formato ===");
-const ex = await json(`${S}/votacao?dataInicio=2026-03-01&dataFim=2026-03-31`);
-if (Array.isArray(ex.dados) && ex.dados.length) {
-  const v = ex.dados[0];
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { votos, informeLegislativo, ...resto } = v;
-  console.log("campos da votação:", JSON.stringify(resto));
-  console.log("1º voto:", JSON.stringify(votos?.[0]));
-  console.log("tipos de voto vistos:", JSON.stringify([...new Set(ex.dados.flatMap((x) => (x.votos ?? []).map((y) => `${y.siglaVotoParlamentar ?? y.voto ?? "?"}|${y.descricaoVotoParlamentar ?? ""}`)))]));
-  console.log("votações em mar/2026:", ex.dados.length, "· secretas:", ex.dados.filter((x) => x.votacaoSecreta === "S").length);
-} else console.log(ex.status, ex.texto ?? JSON.stringify(ex.dados).slice(0, 300));
-
-console.log("\n=== SENADO · /votacao · cobertura por ano (1 ano por consulta) ===");
-for (const ano of [1991, 1995, 1999, 2001, 2003, 2005, 2007, 2011, 2015, 2019, 2023]) {
-  const r = await json(`${S}/votacao?dataInicio=${ano}-01-01&dataFim=${ano}-12-31`);
-  console.log(`${ano}: HTTP ${r.status} · ${Array.isArray(r.dados) ? r.dados.length + " votações" : (r.texto ?? "").slice(0, 120)}`);
+async function json(url) {
+  console.log(`\n===== ${url}`);
+  try {
+    const r = await fetch(url, { headers: { ...UA, Accept: "application/json" } });
+    const t = await r.text();
+    console.log(`status ${r.status}`);
+    console.log(t.slice(0, 6000));
+  } catch (e) {
+    console.log("falhou:", e.message);
+  }
 }
 
-console.log("\n=== SENADO · lista da legislatura 57 · formato de Mandatos ===");
-const leg = await json(`${S}/senador/lista/legislatura/57.json`);
-const ps = leg.dados?.ListaParlamentarLegislatura?.Parlamentares?.Parlamentar ?? [];
-console.log("parlamentares:", ps.length, "· Mandatos.Mandato é lista?", Array.isArray(ps[0]?.Mandatos?.Mandato));
+// Senado: páginas oficiais por período + Mesa atual
+for (const p of ["presidentes/imperio", "republica-velha", "pos-1930", "pos-1964", "nova-republica"]) {
+  await pagina(`https://www25.senado.leg.br/web/senadores/${p}`, { max: 6000 });
+}
+await json("https://legis.senado.leg.br/dadosabertos/composicao/mesaSF.json");
+
+// Câmara: galeria oficial de presidentes + Mesa de cada legislatura (API)
+await pagina("https://www2.camara.leg.br/a-camara/presidencia/galeria-presidentes", { links: /galeria-presidentes\/|Ex_presidentes/i });
+await pagina("https://www2.camara.leg.br/a-camara/conheca/historia/Ex_presidentesCD_Republica", { links: /Ex_presidentes|presiden/i });
+for (const n of [47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]) {
+  await json(`https://dadosabertos.camara.leg.br/api/v2/legislaturas/${n}/mesa`);
+}
+
+// Presidência da República: Biblioteca da Presidência e Arquivo Nacional
+await pagina("https://www.gov.br/planalto/pt-br/conheca-a-presidencia/biblioteca-da-presidencia", { links: /presiden/i, max: 3000 });
+await pagina("https://www.biblioteca.presidencia.gov.br/presidencia/ex-presidentes", { links: /presiden/i, max: 8000 });
+await pagina("https://www.gov.br/planalto/pt-br/conheca-a-presidencia/acervo/galeria-de-ex-presidentes", { links: /presiden/i, max: 8000 });
