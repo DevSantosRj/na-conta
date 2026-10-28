@@ -3,11 +3,13 @@
 //   ANOS=2025,2026 node scripts/coleta/index.mjs  → só esses anos
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
+//   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
 import * as camara from "./camara.mjs";
 import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
+import * as presidencias from "./presidencias.mjs";
 import * as senado from "./senado.mjs";
 
 const hoje = new Date().getUTCFullYear();
@@ -44,6 +46,8 @@ if (fontes.includes("senado")) {
   await etapa("senado:senadores", senado.senadores);
   for (const ano of anos) await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
 }
+
+if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
 
 if (fontes.includes("carreira")) {
   const { data, error } = await db.from("estados").select("uf");

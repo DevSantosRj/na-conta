@@ -160,3 +160,38 @@ export async function buscarVotacao(id: string) {
   const { data: orientacoes } = await db.from("orientacoes").select("partido, orientacao").eq("votacao_id", id).order("partido");
   return { votacao, votos, orientacoes: orientacoes ?? [] };
 }
+
+export type Presidencia = {
+  cargo: "republica" | "camara" | "senado";
+  ordem: number;
+  periodo: string;
+  nome: string;
+  partido: string | null;
+  uf: string | null;
+  inicio: string | null;
+  fim: string | null;
+  ano_inicio: number;
+  ano_fim: number | null;
+  observacao: string | null;
+  parlamentar_id: string | null;
+  fonte_url: string;
+};
+
+// Listas oficiais de presidentes (atualizadas a cada eleição das Mesas ou posse presidencial)
+export async function presidencias() {
+  "use cache";
+  cacheLife("days");
+  cacheTag("presidencias");
+  const { data, error } = await db.from("presidencias").select("*").order("cargo").order("ordem", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as Presidencia[];
+}
+
+export async function presidenciasDoParlamentar(id: string) {
+  "use cache";
+  cacheLife("days");
+  cacheTag("presidencias");
+  const { data, error } = await db.from("presidencias").select("cargo, ano_inicio, ano_fim, inicio, fim").eq("parlamentar_id", id).order("ordem");
+  if (error) throw new Error(error.message);
+  return data as Pick<Presidencia, "cargo" | "ano_inicio" | "ano_fim" | "inicio" | "fim">[];
+}

@@ -13,6 +13,7 @@ const ETAPAS = [
 
 const MODULOS = [
   { titulo: "Como votou", texto: "Cada votação nominal de deputados e senadores, por tema." },
+  { titulo: "Presidências", texto: "Quem preside a República, a Câmara e o Senado hoje, todos os anteriores e como funciona o presidencialismo." },
   { titulo: "Proposições", texto: "Tudo o que cada parlamentar propôs, com resumo automático ao lado da ementa oficial." },
   { titulo: "Gastos e emendas", texto: "Cota parlamentar e emendas: quanto foi indicado, para qual cidade, quanto foi pago." },
   { titulo: "Pacto federativo", texto: "O que cada estado arrecada e o que recebe da União, com a regra da Constituição ao lado." },
@@ -58,6 +59,9 @@ export default function Inicio() {
           <div className={styles.chamadas}>
             <Link href="/parlamentares" className={styles.chamada}>
               Ver como cada parlamentar votou
+            </Link>
+            <Link href="/presidencias" className={styles.chamadaSecundaria}>
+              Presidências
             </Link>
             <Link href="/alertas" className={styles.chamadaSecundaria}>
               Meus alertas

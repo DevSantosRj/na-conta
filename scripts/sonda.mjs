@@ -38,6 +38,7 @@ async function pagina(url, { links = null, max = 12000 } = {}) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function json(url) {
   console.log(`\n===== ${url}`);
   try {

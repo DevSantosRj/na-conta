@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
-import { buscarParlamentar, mandatos, POR_PAGINA, proposicoesDoParlamentar, resumoVotos, votosDoParlamentar } from "@/lib/dados";
+import { buscarParlamentar, mandatos, POR_PAGINA, presidenciasDoParlamentar, proposicoesDoParlamentar, resumoVotos, votosDoParlamentar } from "@/lib/dados";
 import { CASA, data, numero, rotuloVoto, siglaProposicao, VOTO } from "@/lib/formato";
 import { ESTADOS } from "@/dados/estados";
 import { Seguir } from "./Seguir";
@@ -29,7 +29,7 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
   const { id } = await params;
   const p = await buscarParlamentar(id);
   if (!p) notFound();
-  const [resumo, mand] = await Promise.all([resumoVotos(id), mandatos(id)]);
+  const [resumo, mand, presidiu] = await Promise.all([resumoVotos(id), mandatos(id), presidenciasDoParlamentar(id)]);
 
   return (
     <>
@@ -48,6 +48,14 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
             {!p.ativo ? " · fora de exercício" : ""}
           </p>
           {p.nome_civil !== p.nome_parlamentar && <p className={styles.civil}>Nome civil: {p.nome_civil}</p>}
+          {presidiu.length > 0 && (
+            <p className={styles.civil}>
+              <Link href={`/presidencias?cargo=${p.casa}`}>
+                {presidiu.some((x) => !x.ano_fim) ? "Preside" : "Presidiu"} {p.casa === "camara" ? "a Câmara" : "o Senado"}
+              </Link>
+              : {presidiu.map((x) => (x.ano_fim ? (x.ano_inicio === x.ano_fim ? `${x.ano_inicio}` : `${x.ano_inicio}–${x.ano_fim}`) : `desde ${x.ano_inicio}`)).join(", ")}
+            </p>
+          )}
         </div>
       </div>
 

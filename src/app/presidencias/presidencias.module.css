@@ -1,0 +1,171 @@
+.secao {
+  margin-top: 24px;
+}
+
+.atuais {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.atual {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nomeAtual {
+  margin: 4px 0 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.nomeAtual a {
+  color: var(--cor-texto);
+}
+
+.obs {
+  display: block;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}
+
+.fatos {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--cor-texto-2);
+}
+
+.h3 {
+  margin: 20px 0 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 17px;
+}
+
+summary.h3 {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.sucessao {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sucessao li {
+  counter-increment: s;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+}
+
+.sucessao li::before {
+  content: counter(s);
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  background: var(--cor-fundo);
+}
+
+.sucessao span {
+  color: var(--cor-texto-2);
+}
+
+.fonteMini {
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  color: var(--cor-texto-3);
+}
+
+.abas {
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--cor-esqueleto);
+}
+
+.aba {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  font-weight: 600;
+  color: var(--cor-texto-2);
+  text-decoration: none;
+}
+
+.aba[aria-current="page"] {
+  background: #ffffff;
+  color: var(--cor-texto);
+  box-shadow: 0 1px 3px rgba(21, 23, 26, 0.12);
+}
+
+.grupo {
+  margin-top: 8px;
+}
+
+.linhaTempo {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border-left: 2px solid var(--cor-borda);
+}
+
+.linhaTempo li {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+  padding: 8px 0 8px 14px;
+}
+
+@media (min-width: 640px) {
+  .linhaTempo li {
+    grid-template-columns: 200px 1fr;
+    gap: 12px;
+  }
+}
+
+.quando {
+  font-family: var(--fonte-mono);
+  font-size: 13px;
+  color: var(--cor-texto-3);
+}
+
+.quem {
+  font-weight: 600;
+}
+
+.quem a {
+  color: var(--cor-principal);
+}
+
+.partido {
+  font-weight: 400;
+  color: var(--cor-texto-2);
+}
