@@ -53,26 +53,15 @@ async function json(url) {
 
 const S = "https://legis.senado.leg.br/dadosabertos";
 
-// 1) Documentação oficial: caminhos que falam de processo/autoria
-try {
-  const r = await fetch(`${S}/v3/api-docs`, { headers: { ...UA, Accept: "application/json" } });
-  console.log("api-docs status", r.status);
-  if (r.ok) {
-    const doc = await r.json();
-    for (const [caminho, ops] of Object.entries(doc.paths ?? {})) {
-      if (/process|autor|materia|senador\/\{/i.test(caminho)) {
-        const g = ops.get ?? {};
-        console.log(`PATH ${caminho} | ${g.summary ?? ""} | params: ${(g.parameters ?? []).map((p) => p.name).join(",")}${g.deprecated ? " | DEPRECIADO" : ""}`);
-      }
-    }
-  }
-} catch (e) {
-  console.log("api-docs falhou", e.message);
+// Formato do campo "autoria" nos projetos de um senador (Davi Alcolumbre = 3830)
+const r = await fetch(`${S}/processo?codigoParlamentarAutor=3830`, { headers: { ...UA, Accept: "application/json" } });
+const lista = await r.json();
+const projetos = lista.filter((p) => /^Proj|^Proposta/.test(p.tipoDocumento ?? ""));
+console.log("total", lista.length, "projetos", projetos.length);
+for (const p of projetos.filter((p) => /^PLC/.test(p.identificacao)).slice(0, 5)) console.log("PLC |", p.identificacao, "|", p.autoria);
+const vistos = new Map();
+for (const p of projetos) {
+  const chave = (p.autoria ?? "").slice(0, 60);
+  if (!vistos.has(chave)) vistos.set(chave, p.identificacao);
 }
-
-// 2) Tentativas com um senador conhecido (Renan Calheiros = 70)
-await json(`${S}/processo?codigoParlamentarAutor=70&dataInicioApresentacao=2025-01-01&dataFimApresentacao=2025-12-31`);
-await json(`${S}/processo?codigoParlamentarAutor=70`);
-await json(`${S}/processo?autor=70&sigla=PL&ano=2025`);
-await json(`${S}/senador/70/autorias.json`);
-await json(`${S}/processo?sigla=PL&ano=2025&numero=1`);
+for (const [a, id] of [...vistos].slice(0, 40)) console.log("AUT |", id, "|", a);
