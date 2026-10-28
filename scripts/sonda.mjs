@@ -1,5 +1,5 @@
-// Sonda das fontes oficiais (3ª rodada): listas oficiais de presidentes
-// da República, da Câmara e do Senado. Rodadas anteriores: histórico do git e docs/fontes.md.
+// Sonda das fontes oficiais (4ª rodada): autoria de projetos no Senado (serviço /processo).
+// Rodadas anteriores: histórico do git e docs/fontes.md.
 
 const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
 
@@ -14,6 +14,7 @@ const texto = (html) =>
     .replace(/\n\s*\n+/g, "\n")
     .trim();
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pagina(url, { links = null, max = 12000 } = {}) {
   console.log(`\n===== ${url}`);
   try {
@@ -38,7 +39,6 @@ async function pagina(url, { links = null, max = 12000 } = {}) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function json(url) {
   console.log(`\n===== ${url}`);
   try {
@@ -51,30 +51,28 @@ async function json(url) {
   }
 }
 
-import { mkdirSync, writeFileSync } from "node:fs";
-mkdirSync("sonda-arquivos", { recursive: true });
+const S = "https://legis.senado.leg.br/dadosabertos";
 
-// Guarda o arquivo original (HTML/PDF/JSON) para leitura exata fora daqui.
-async function guardar(nome, url, { headers = {} } = {}) {
-  try {
-    const r = await fetch(url, { headers: { ...UA, ...headers }, redirect: "follow" });
-    const b = Buffer.from(await r.arrayBuffer());
-    writeFileSync(`sonda-arquivos/${nome}`, b);
-    console.log(`${nome}: status ${r.status} · ${b.length} bytes · ${r.url}`);
-  } catch (e) {
-    console.log(`${nome}: falhou ${e.message}`);
+// 1) Documentação oficial: caminhos que falam de processo/autoria
+try {
+  const r = await fetch(`${S}/v3/api-docs`, { headers: { ...UA, Accept: "application/json" } });
+  console.log("api-docs status", r.status);
+  if (r.ok) {
+    const doc = await r.json();
+    for (const [caminho, ops] of Object.entries(doc.paths ?? {})) {
+      if (/process|autor|materia|senador\/\{/i.test(caminho)) {
+        const g = ops.get ?? {};
+        console.log(`PATH ${caminho} | ${g.summary ?? ""} | params: ${(g.parameters ?? []).map((p) => p.name).join(",")}${g.deprecated ? " | DEPRECIADO" : ""}`);
+      }
+    }
   }
+} catch (e) {
+  console.log("api-docs falhou", e.message);
 }
 
-await guardar("camara-presidentes.html", "https://www2.camara.leg.br/a-camara/conheca/historia/presidentes");
-for (const p of ["presidentes/imperio", "republica-velha", "pos-1930", "pos-1964", "nova-republica"]) {
-  await guardar(`senado-${p.replace("/", "-")}.html`, `https://www25.senado.leg.br/web/senadores/${p}`);
-}
-await guardar("senado-mesa.json", "https://legis.senado.leg.br/dadosabertos/composicao/mesaSF.json", { headers: { Accept: "application/json" } });
-for (const n of [52, 53, 54, 55, 56, 57]) {
-  await guardar(`camara-mesa-${n}.json`, `https://dadosabertos.camara.leg.br/api/v2/legislaturas/${n}/mesa`, { headers: { Accept: "application/json" } });
-}
-await guardar("an-presidentes-deodoro-lula.pdf", "https://presidentes.an.gov.br/images/publicacoes/OsPresidenteseaRepublica.pdf");
-await guardar("an-presidentes-deodoro-dilma.pdf", "https://www.gov.br/arquivonacional/pt-br/servicos/publicacoes/OspresidenteseaRepblica_DeodoroDilma.pdf");
-await guardar("vice-presidentes.pdf", "https://www.gov.br/planalto/pt-br/vice-presidencia/acesso-a-informacao/institucional/biografia-dos-vice-presidentes-da-republica/biografias-vice-presidentes-versao-final.pdf");
-await pagina("https://presidentes.an.gov.br/", { links: /presiden|galeria/i, max: 4000 });
+// 2) Tentativas com um senador conhecido (Renan Calheiros = 70)
+await json(`${S}/processo?codigoParlamentarAutor=70&dataInicioApresentacao=2025-01-01&dataFimApresentacao=2025-12-31`);
+await json(`${S}/processo?codigoParlamentarAutor=70`);
+await json(`${S}/processo?autor=70&sigla=PL&ano=2025`);
+await json(`${S}/senador/70/autorias.json`);
+await json(`${S}/processo?sigla=PL&ano=2025&numero=1`);
