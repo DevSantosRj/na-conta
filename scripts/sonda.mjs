@@ -50,20 +50,30 @@ async function json(url) {
   }
 }
 
-// Senado: páginas oficiais por período + Mesa atual
+import { mkdirSync, writeFileSync } from "node:fs";
+mkdirSync("sonda-arquivos", { recursive: true });
+
+// Guarda o arquivo original (HTML/PDF/JSON) para leitura exata fora daqui.
+async function guardar(nome, url, { headers = {} } = {}) {
+  try {
+    const r = await fetch(url, { headers: { ...UA, ...headers }, redirect: "follow" });
+    const b = Buffer.from(await r.arrayBuffer());
+    writeFileSync(`sonda-arquivos/${nome}`, b);
+    console.log(`${nome}: status ${r.status} · ${b.length} bytes · ${r.url}`);
+  } catch (e) {
+    console.log(`${nome}: falhou ${e.message}`);
+  }
+}
+
+await guardar("camara-presidentes.html", "https://www2.camara.leg.br/a-camara/conheca/historia/presidentes");
 for (const p of ["presidentes/imperio", "republica-velha", "pos-1930", "pos-1964", "nova-republica"]) {
-  await pagina(`https://www25.senado.leg.br/web/senadores/${p}`, { max: 6000 });
+  await guardar(`senado-${p.replace("/", "-")}.html`, `https://www25.senado.leg.br/web/senadores/${p}`);
 }
-await json("https://legis.senado.leg.br/dadosabertos/composicao/mesaSF.json");
-
-// Câmara: galeria oficial de presidentes + Mesa de cada legislatura (API)
-await pagina("https://www2.camara.leg.br/a-camara/presidencia/galeria-presidentes", { links: /galeria-presidentes\/|Ex_presidentes/i });
-await pagina("https://www2.camara.leg.br/a-camara/conheca/historia/Ex_presidentesCD_Republica", { links: /Ex_presidentes|presiden/i });
-for (const n of [47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]) {
-  await json(`https://dadosabertos.camara.leg.br/api/v2/legislaturas/${n}/mesa`);
+await guardar("senado-mesa.json", "https://legis.senado.leg.br/dadosabertos/composicao/mesaSF.json", { headers: { Accept: "application/json" } });
+for (const n of [52, 53, 54, 55, 56, 57]) {
+  await guardar(`camara-mesa-${n}.json`, `https://dadosabertos.camara.leg.br/api/v2/legislaturas/${n}/mesa`, { headers: { Accept: "application/json" } });
 }
-
-// Presidência da República: Biblioteca da Presidência e Arquivo Nacional
-await pagina("https://www.gov.br/planalto/pt-br/conheca-a-presidencia/biblioteca-da-presidencia", { links: /presiden/i, max: 3000 });
-await pagina("https://www.biblioteca.presidencia.gov.br/presidencia/ex-presidentes", { links: /presiden/i, max: 8000 });
-await pagina("https://www.gov.br/planalto/pt-br/conheca-a-presidencia/acervo/galeria-de-ex-presidentes", { links: /presiden/i, max: 8000 });
+await guardar("an-presidentes-deodoro-lula.pdf", "https://presidentes.an.gov.br/images/publicacoes/OsPresidenteseaRepublica.pdf");
+await guardar("an-presidentes-deodoro-dilma.pdf", "https://www.gov.br/arquivonacional/pt-br/servicos/publicacoes/OspresidenteseaRepblica_DeodoroDilma.pdf");
+await guardar("vice-presidentes.pdf", "https://www.gov.br/planalto/pt-br/vice-presidencia/acesso-a-informacao/institucional/biografia-dos-vice-presidentes-da-republica/biografias-vice-presidentes-versao-final.pdf");
+await pagina("https://presidentes.an.gov.br/", { links: /presiden|galeria/i, max: 4000 });
