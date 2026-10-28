@@ -10,9 +10,9 @@ on:
         description: "Anos separados por vírgula (vazio = legislatura atual)"
         required: false
       fontes:
-        description: "camara, senado ou camara,senado"
+        description: "camara, senado, conferir (separados por vírgula)"
         required: false
-        default: "camara,senado"
+        default: "camara,senado,conferir"
 
 permissions:
   contents: read

@@ -4,13 +4,15 @@
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 import * as camara from "./camara.mjs";
 import { registrar } from "./comum.mjs";
+import { conferirCamara } from "./conferir.mjs";
 import * as senado from "./senado.mjs";
 
 const hoje = new Date().getUTCFullYear();
 const anos = process.env.ANOS
   ? process.env.ANOS.split(",").map(Number)
   : Array.from({ length: hoje - 2023 + 1 }, (_, i) => 2023 + i);
-const fontes = (process.env.FONTES ?? "camara,senado").split(",");
+// "conferir" compara os placares gravados com os oficiais (roda por padrão após a coleta)
+const fontes = (process.env.FONTES || "camara,senado,conferir").split(",");
 
 let falhas = 0;
 async function etapa(nome, fn) {
@@ -32,6 +34,10 @@ if (fontes.includes("camara")) {
 if (fontes.includes("senado")) {
   await etapa("senado:senadores", senado.senadores);
   for (const ano of anos) await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
+}
+
+if (fontes.includes("conferir")) {
+  for (const ano of anos) await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
 }
 
 if (falhas) {
