@@ -103,6 +103,8 @@ export async function votacoes(ano) {
     const d = `C-${l.deputado_id}`;
     if (!deputadosOk.has(d)) continue;
     nominais.add(l.idVotacao);
+    // Voto em branco na fonte não é voto: fica sem registro (o placar oficial vem do arquivo de votações).
+    if (!l.voto.trim()) continue;
     votos.push({
       votacao_id: `C-${l.idVotacao}`,
       parlamentar_id: d,
@@ -122,7 +124,7 @@ export async function votacoes(ano) {
 
   // 3) As votações nominais
   const lista = [];
-  for await (const l of lerCsv(ARQ("votacoes", ano), ["id", "data", "dataHoraRegistro", "aprovacao", "descricao"])) {
+  for await (const l of lerCsv(ARQ("votacoes", ano), ["id", "data", "dataHoraRegistro", "aprovacao", "descricao", "votosSim", "votosNao", "votosOutros"])) {
     if (!nominais.has(l.id)) continue;
     lista.push({
       id: `C-${l.id}`,
@@ -131,6 +133,9 @@ export async function votacoes(ano) {
       descricao: l.descricao || "Votação nominal",
       resultado: l.aprovacao === "1" ? "aprovada" : l.aprovacao === "0" ? "rejeitada" : "",
       proposicao_id: proposicaoDa.get(l.id) ?? null,
+      placar_sim: l.votosSim === "" ? null : Number(l.votosSim),
+      placar_nao: l.votosNao === "" ? null : Number(l.votosNao),
+      placar_outros: l.votosOutros === "" ? null : Number(l.votosOutros),
       fonte_url: PAGINA_VOTACAO(l.id),
     });
   }

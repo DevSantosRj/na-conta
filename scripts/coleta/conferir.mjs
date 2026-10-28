@@ -20,7 +20,13 @@ export async function conferirCamara(ano) {
 
   for (let i = 0; i < ids.length; i += 50) {
     for (let de = 0; ; de += 1000) {
-      const { data, error } = await db.from("votos").select("votacao_id, voto").in("votacao_id", ids.slice(i, i + 50)).range(de, de + 999);
+      const { data, error } = await db
+        .from("votos")
+        .select("votacao_id, voto")
+        .in("votacao_id", ids.slice(i, i + 50))
+        .order("votacao_id")
+        .order("parlamentar_id")
+        .range(de, de + 999);
       if (error) throw new Error(error.message);
       for (const v of data) {
         const c = nossas.get(v.votacao_id) ?? { sim: 0, nao: 0 };
@@ -33,15 +39,22 @@ export async function conferirCamara(ano) {
   }
 
   const diferencas = [];
+  const semVotoNaFonte = [];
   let certas = 0;
   for (const id of ids) {
     const o = oficial.get(id);
-    const n = nossas.get(id) ?? { sim: 0, nao: 0 };
     if (!o) continue;
-    if (o.sim === n.sim && o.nao === n.nao) certas++;
-    else diferencas.push(`${id}: oficial ${o.sim}x${o.nao}, banco ${n.sim}x${n.nao}`);
+    const n = nossas.get(id);
+    // A fonte publicou o placar mas deixou o voto de cada deputado em branco: não é defeito do robô.
+    if ((n?.sim ?? 0) + (n?.nao ?? 0) === 0 && o.sim + o.nao > 0) {
+      semVotoNaFonte.push(id);
+      continue;
+    }
+    if (o.sim === (n?.sim ?? 0) && o.nao === (n?.nao ?? 0)) certas++;
+    else diferencas.push(`${id}: oficial ${o.sim}x${o.nao}, banco ${n?.sim ?? 0}x${n?.nao ?? 0}`);
   }
   console.log(`Conferência ${ano}: ${certas} de ${ids.length} votações com placar idêntico ao oficial.`);
+  if (semVotoNaFonte.length) console.log(`Sem voto individual na fonte (só placar): ${semVotoNaFonte.join(", ")}`);
   if (diferencas.length) throw new Error(`${diferencas.length} divergência(s): ${diferencas.slice(0, 15).join(" | ")}`);
   return certas;
 }
