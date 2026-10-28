@@ -1,0 +1,244 @@
+.conteudo {
+  max-width: var(--largura-max);
+  margin: 0 auto;
+  padding: 0 var(--margem);
+}
+
+@media (min-width: 768px) {
+  .conteudo {
+    padding: 0 24px;
+  }
+}
+
+/* Topo */
+.topo {
+  background: var(--cor-cartao);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.topo .conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+
+.selo {
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cor-esqueleto);
+  color: var(--cor-texto-2);
+}
+
+/* Abertura */
+.abertura {
+  padding-top: 48px;
+  padding-bottom: 32px;
+}
+
+@media (min-width: 768px) {
+  .abertura {
+    padding-top: 72px;
+    padding-bottom: 48px;
+  }
+}
+
+.sobretitulo {
+  margin: 0 0 14px;
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-texto-3);
+}
+
+.titulo {
+  margin: 0;
+  max-width: 880px;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+}
+
+@media (min-width: 768px) {
+  .titulo {
+    font-size: 56px;
+  }
+}
+
+.lead {
+  margin: 18px 0 0;
+  max-width: 640px;
+  font-size: 17px;
+  color: var(--cor-texto-2);
+}
+
+/* Cartão do mapa */
+.cartaoMapa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px 40px;
+  padding: 24px;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-cartao);
+}
+
+@media (min-width: 768px) {
+  .cartaoMapa {
+    padding: 32px;
+  }
+}
+
+.colunaMapa {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.colunaPlano {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+
+.h2 {
+  margin: 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+@media (min-width: 768px) {
+  .h2 {
+    font-size: 26px;
+  }
+}
+
+.apoio {
+  margin: 6px 0 20px;
+  font-size: 14px;
+  color: var(--cor-texto-3);
+}
+
+/* Etapas */
+.etapas {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--cor-borda);
+}
+
+.etapa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--cor-borda);
+  color: var(--cor-texto-2);
+}
+
+.etapaNumero {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--fonte-mono);
+  font-size: 13px;
+  background: var(--cor-fundo);
+  color: var(--cor-texto-2);
+}
+
+.etapaNome {
+  flex: 1 1 auto;
+}
+
+.etapaStatus {
+  flex: none;
+  font-family: var(--fonte-mono);
+  font-size: 12px;
+  color: var(--cor-texto-3);
+}
+
+.etapa[data-status="em andamento"] {
+  color: var(--cor-texto);
+  font-weight: 600;
+}
+
+.etapa[data-status="em andamento"] .etapaNumero {
+  background: var(--cor-principal);
+  color: #ffffff;
+}
+
+.etapa[data-status="em andamento"] .etapaStatus {
+  color: var(--cor-principal);
+}
+
+/* Módulos */
+.modulos {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0 0 72px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.modulo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 22px;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+}
+
+.moduloTitulo {
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.moduloTexto {
+  font-size: 15px;
+  color: var(--cor-texto-2);
+}
+
+/* Seção de módulos precisa de respiro acima */
+.secaoModulos {
+  padding-top: 56px;
+}
+
+/* Rodapé */
+.rodape {
+  background: var(--cor-cartao);
+  border-top: 1px solid var(--cor-borda);
+}
+
+.rodape .conteudo {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  font-size: 14px;
+  color: var(--cor-texto-3);
+}

@@ -1,0 +1,76 @@
+/* Na Conta — tokens do briefing de design (aba 04 da Planta do App) */
+:root {
+  --cor-principal: #1d3f9e;
+  --cor-texto: #15171a;
+  --cor-texto-2: #3d4148;
+  --cor-texto-3: #5b6068;
+  --cor-fundo: #f5f4ef;
+  --cor-cartao: #ffffff;
+  --cor-borda: #dddbd3;
+  --cor-borda-forte: #c9c6bc;
+  --cor-esqueleto: #eceae3;
+  --cor-destaque: #f2a65a;
+  --cor-erro: #b3261e;
+  --cor-erro-fundo: #fdecea;
+  --cor-sucesso: #1e6b45;
+  --cor-sucesso-fundo: #e6f4ec;
+
+  --fonte-titulo: "Space Grotesk", system-ui, sans-serif;
+  --fonte-texto: "IBM Plex Sans", system-ui, sans-serif;
+  --fonte-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --fonte-oficial: "IBM Plex Serif", Georgia, serif;
+
+  --raio: 8px;
+  --raio-cartao: 16px;
+  --largura-max: 1200px;
+  --margem: 20px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  font-family: var(--fonte-texto);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+}
+
+a {
+  color: var(--cor-principal);
+}
+
+a:hover {
+  color: var(--cor-texto);
+}
+
+:focus-visible {
+  outline: 3px solid var(--cor-principal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
