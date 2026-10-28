@@ -2,6 +2,7 @@
 //   node scripts/coleta/index.mjs                 → anos da legislatura atual (2023 até hoje)
 //   ANOS=2025,2026 node scripts/coleta/index.mjs  → só esses anos
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
+//   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
 import * as camara from "./camara.mjs";
@@ -32,6 +33,12 @@ if (fontes.includes("camara")) {
   await etapa("camara:deputados", camara.deputados);
   for (const ano of anos) await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
   for (const ano of anos) await etapa(`camara:votacoes:${ano}`, () => camara.votacoes(ano));
+  await etapa("camara:vinculos", camara.vincular);
+}
+// Só proposições (anos antes de 2001, quando a Câmara ainda não publicava votos individuais)
+if (fontes.includes("proposicoes")) {
+  for (const ano of anos) await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
+  await etapa("camara:vinculos", camara.vincular);
 }
 if (fontes.includes("senado")) {
   await etapa("senado:senadores", senado.senadores);

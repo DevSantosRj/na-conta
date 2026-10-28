@@ -1,6 +1,6 @@
 // Robô da Câmara dos Deputados: deputados, proposições, autorias, votações, votos e orientações.
 // Fontes: API v2 (lista de deputados) e arquivos anuais em lote (CSV) de dadosabertos.camara.leg.br.
-import { baixarJson, gravar, idsExistentes, lerCsv } from "./comum.mjs";
+import { baixarJson, db, gravar, idsExistentes, lerCsv } from "./comum.mjs";
 
 const API = "https://dadosabertos.camara.leg.br/api/v2";
 const ARQ = (nome, ano) => `https://dadosabertos.camara.leg.br/arquivos/${nome}/csv/${nome}-${ano}.csv`;
@@ -8,7 +8,8 @@ const PAGINA_VOTACAO = (id) => `${API}/votacoes/${id}`;
 const PAGINA_PROPOSICAO = (id) => `https://www.camara.leg.br/proposicoesWeb/fichadetramitacao?idProposicao=${id}`;
 
 // Tipos de proposição que entram no perfil (requerimentos e emendas ficam de fora da V1).
-const TIPOS = new Set(["PL", "PLP", "PEC", "PDL", "PRC", "MPV", "PLV"]);
+// PDC é o nome antigo do PDL (até 2019).
+const TIPOS = new Set(["PL", "PLP", "PEC", "PDL", "PDC", "PRC", "MPV", "PLV"]);
 
 const LEGISLATURA = { numero: 57, inicio: "2023-02-01" };
 
@@ -17,6 +18,69 @@ const LEGISLATURA = { numero: 57, inicio: "2023-02-01" };
 export const historico = (ano) => ano < 2023;
 
 const VOTO = { Sim: "sim", "Não": "nao", "Abstenção": "abstencao", "Obstrução": "obstrucao" };
+
+// Proposição citada na descrição da votação: "Projeto de Lei nº 2.724, de 2015" ou "PL 2724/2015".
+const CITACAO = [
+  /(?:Projeto de Lei(?: Complementar| de Conversão)?|Proposta de Emenda à Constituição|Projeto de Decreto Legislativo|Projeto de Resolução|Medida Provisória)\s+n?[º°o.]*\s*([\d.]+)\s*(?:,\s*de\s*|\/)\s*(\d{4})/i,
+  /\b(?:PLP|PLV|PEC|PDL|PDC|PRC|MPV|PL)\s*(?:n?[º°o.]*\s*)?([\d.]+)\/(\d{4})/,
+];
+
+export function citadaNaDescricao(descricao) {
+  for (const r of CITACAO) {
+    const m = (descricao ?? "").match(r);
+    if (m) return { numero: Number(m[1].replace(/\./g, "")), ano: Number(m[2]) };
+  }
+  return null;
+}
+
+// Escolhe a proposição principal da votação entre as que a fonte associa a ela.
+// Se a descrição cita uma proposição, só ela serve: sem vínculo é melhor que vínculo errado.
+export function escolherPrincipal(descricao, citadas, existentes) {
+  const alvo = citadaNaDescricao(descricao);
+  if (alvo) {
+    return citadas.find((c) => existentes.get(c)?.numero === alvo.numero && existentes.get(c)?.ano === alvo.ano) ?? null;
+  }
+  return citadas.find((c) => existentes.has(c)) ?? null;
+}
+
+async function mapaProposicoes() {
+  const mapa = new Map();
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await db.from("proposicoes").select("id, numero, ano").eq("casa", "camara").order("id").range(de, de + 999);
+    if (error) throw new Error(`proposicoes: ${error.message}`);
+    data.forEach((l) => mapa.set(l.id, { numero: l.numero, ano: l.ano }));
+    if (data.length < 1000) return mapa;
+  }
+}
+
+async function votacoesGravadas() {
+  const todas = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await db.from("votacoes").select("id, descricao, proposicao_id, proposicoes_citadas").eq("casa", "camara").order("id").range(de, de + 999);
+    if (error) throw new Error(`votacoes: ${error.message}`);
+    todas.push(...data);
+    if (data.length < 1000) return todas;
+  }
+}
+
+// Refaz o vínculo votação → proposição principal depois que proposições antigas entram no banco.
+export async function vincular() {
+  const existentes = await mapaProposicoes();
+  const mudar = [];
+  for (const v of await votacoesGravadas()) {
+    const p = escolherPrincipal(v.descricao, v.proposicoes_citadas ?? [], existentes);
+    if (p !== v.proposicao_id) mudar.push({ id: v.id, proposicao_id: p });
+  }
+  for (let i = 0; i < mudar.length; i += 20) {
+    await Promise.all(
+      mudar.slice(i, i + 20).map(async (m) => {
+        const { error } = await db.from("votacoes").update({ proposicao_id: m.proposicao_id }).eq("id", m.id);
+        if (error) throw new Error(`votacoes: ${error.message}`);
+      }),
+    );
+  }
+  return mudar.length;
+}
 
 async function paginas(endereco) {
   const dados = [];
@@ -78,6 +142,8 @@ export async function proposicoes(ano) {
       if (l.idDeputadoAutor && deputadosOk.has(`C-${l.idDeputadoAutor}`)) interessa.add(`C-${l.idProposicao}`);
     }
     for await (const l of lerCsv(ARQ("votacoesProposicoes", ano), ["proposicao_id"])) interessa.add(`C-${l.proposicao_id}`);
+    // Proposições deste ano que foram a voto em anos posteriores já carregados
+    for (const v of await votacoesGravadas()) for (const c of v.proposicoes_citadas ?? []) interessa.add(c);
   }
 
   const linhas = [];
@@ -129,25 +195,31 @@ export async function votacoes(ano) {
     });
   }
 
-  // 2) Proposição principal de cada votação (só se já estiver no banco)
-  const proposicoesOk = await idsExistentes("proposicoes", "camara");
-  const proposicaoDa = new Map();
+  // 2) Proposições que a fonte associa a cada votação (a principal é escolhida no passo 3)
+  const existentes = await mapaProposicoes();
+  const citadasDa = new Map();
   for await (const l of lerCsv(ARQ("votacoesProposicoes", ano), ["idVotacao", "proposicao_id"])) {
+    if (!nominais.has(l.idVotacao) || !l.proposicao_id) continue;
+    const lista = citadasDa.get(l.idVotacao) ?? [];
     const p = `C-${l.proposicao_id}`;
-    if (nominais.has(l.idVotacao) && proposicoesOk.has(p) && !proposicaoDa.has(l.idVotacao)) proposicaoDa.set(l.idVotacao, p);
+    if (!lista.includes(p)) lista.push(p);
+    citadasDa.set(l.idVotacao, lista);
   }
 
   // 3) As votações nominais
   const lista = [];
   for await (const l of lerCsv(ARQ("votacoes", ano), ["id", "data", "dataHoraRegistro", "aprovacao", "descricao", "votosSim", "votosNao", "votosOutros"])) {
     if (!nominais.has(l.id)) continue;
+    const descricao = l.descricao || "Votação nominal";
+    const citadas = citadasDa.get(l.id) ?? [];
     lista.push({
       id: `C-${l.id}`,
       casa: "camara",
       data: l.dataHoraRegistro || l.data,
-      descricao: l.descricao || "Votação nominal",
+      descricao,
       resultado: l.aprovacao === "1" ? "aprovada" : l.aprovacao === "0" ? "rejeitada" : "",
-      proposicao_id: proposicaoDa.get(l.id) ?? null,
+      proposicao_id: escolherPrincipal(descricao, citadas, existentes),
+      proposicoes_citadas: citadas,
       placar_sim: l.votosSim === "" ? null : Number(l.votosSim),
       placar_nao: l.votosNao === "" ? null : Number(l.votosNao),
       placar_outros: l.votosOutros === "" ? null : Number(l.votosOutros),
