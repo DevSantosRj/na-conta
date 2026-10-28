@@ -1,0 +1,42 @@
+name: Coleta de dados
+
+on:
+  schedule:
+    # Toda madrugada, 03:17 no horário de Brasília (06:17 UTC)
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: "Anos separados por vírgula (vazio = legislatura atual)"
+        required: false
+      fontes:
+        description: "camara, senado ou camara,senado"
+        required: false
+        default: "camara,senado"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coleta
+  cancel-in-progress: false
+
+jobs:
+  coleta:
+    # Chaves só existem no repositório original, nunca em cópias (forks)
+    if: github.repository == 'DevSantosRj/na-conta'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/coleta/index.mjs
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANOS: ${{ inputs.anos }}
+          FONTES: ${{ inputs.fontes }}

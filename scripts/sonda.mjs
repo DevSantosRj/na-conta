@@ -18,6 +18,7 @@ console.log("=== SENADO · /votacao (serviço novo) · formato ===");
 const ex = await json(`${S}/votacao?dataInicio=2026-03-01&dataFim=2026-03-31`);
 if (Array.isArray(ex.dados) && ex.dados.length) {
   const v = ex.dados[0];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { votos, informeLegislativo, ...resto } = v;
   console.log("campos da votação:", JSON.stringify(resto));
   console.log("1º voto:", JSON.stringify(votos?.[0]));
