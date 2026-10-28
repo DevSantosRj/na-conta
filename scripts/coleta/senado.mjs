@@ -1,6 +1,8 @@
 // Robô do Senado Federal: senadores, votações nominais de Plenário e votos.
 // Fonte: dados abertos do Senado (legis.senado.leg.br/dadosabertos), serviço /votacao.
-import { baixarJson, db, gravar } from "./comum.mjs";
+import { baixarJson, db, gravar, idsExistentes } from "./comum.mjs";
+
+const historico = (ano) => ano < 2023;
 
 const S = "https://legis.senado.leg.br/dadosabertos";
 const LEGISLATURA = { numero: 57, inicio: "2023-02-01" };
@@ -137,10 +139,28 @@ export async function votacoes(ano) {
           parlamentar_id: pid,
           voto: traduzVoto(p.siglaVotoParlamentar),
           voto_original: [p.siglaVotoParlamentar, p.descricaoVotoParlamentar].filter(Boolean).join(" – "),
-          fonte_url: v.codigoMateria ? MATERIA(v.codigoMateria) : PERFIL(p.codigoParlamentar),
         });
       }
     }
+  }
+
+  // No histórico, só entram os votos de quem está no mandato hoje (e as votações e matérias em que votaram).
+  if (historico(ano)) {
+    const atuais = await idsExistentes("parlamentares", "senado");
+    const mantidos = votos.filter((v) => atuais.has(v.parlamentar_id));
+    const comVoto = new Set(mantidos.map((v) => v.votacao_id));
+    const listaH = lista_.filter((v) => comVoto.has(v.id));
+    const materias = new Set(listaH.map((v) => v.proposicao_id).filter(Boolean));
+    const propsH = new Map(proposicoes.filter((p) => materias.has(p.id)).map((p) => [p.id, p]));
+    for (let i = 0, ids = [...propsH.keys()]; i < ids.length; i += 500) {
+      const { data, error } = await db.from("proposicoes").select("id").in("id", ids.slice(i, i + 500));
+      if (error) throw new Error(`proposicoes: ${error.message}`);
+      data.forEach((l) => propsH.delete(l.id));
+    }
+    let h = await gravar("proposicoes", [...propsH.values()], (l) => l.id, "id");
+    h += await gravar("votacoes", listaH, (l) => l.id, "id");
+    h += await gravar("votos", mantidos, (l) => `${l.votacao_id}|${l.parlamentar_id}`, "votacao_id,parlamentar_id");
+    return h;
   }
 
   // Parlamentares novos só são inseridos; os já cadastrados (com nome civil e "ativo" corretos) não são sobrescritos.
@@ -162,4 +182,25 @@ export async function votacoes(ano) {
   n += await gravar("votacoes", lista_, (l) => l.id, "id");
   n += await gravar("votos", votos, (l) => `${l.votacao_id}|${l.parlamentar_id}`, "votacao_id,parlamentar_id");
   return n;
+}
+
+// Carreira: em quais legislaturas anteriores cada senador atual também teve mandato no Senado.
+export async function carreira(ufsValidas, datas) {
+  const atuais = await idsExistentes("parlamentares", "senado");
+  const mandatos = [];
+  for (const [numero, d] of datas) {
+    if (numero >= LEGISLATURA.numero) continue;
+    const leg = await baixarJson(`${S}/senador/lista/legislatura/${numero}.json`);
+    for (const p of lista(leg?.ListaParlamentarLegislatura?.Parlamentares?.Parlamentar)) {
+      const codigo = p.IdentificacaoParlamentar?.CodigoParlamentar;
+      if (!atuais.has(`S-${codigo}`)) continue;
+      const m = lista(p.Mandatos?.Mandato).find((x) =>
+        [x.PrimeiraLegislaturaDoMandato?.NumeroLegislatura, x.SegundaLegislaturaDoMandato?.NumeroLegislatura].includes(String(numero)),
+      );
+      const uf = m?.UfParlamentar;
+      if (!ufsValidas.has(uf)) continue;
+      mandatos.push({ parlamentar_id: `S-${codigo}`, casa: "senado", legislatura: numero, uf, partido: "", inicio: d.inicio, fim: d.fim, fonte_url: PERFIL(codigo) });
+    }
+  }
+  return gravar("mandatos", mandatos, (l) => `${l.parlamentar_id}|${l.legislatura}`, "parlamentar_id,legislatura");
 }

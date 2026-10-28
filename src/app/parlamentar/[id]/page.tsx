@@ -74,8 +74,15 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
         </div>
       </dl>
       <p className={ui.fonte}>
-        Mandato{mand.length > 1 ? "s" : ""} no período coletado: {mand.map((m) => `${m.legislatura}ª legislatura (${m.partido || "—"}-${m.uf})`).join(", ")} ·{" "}
-        <a href={p.fonte_url}>fonte oficial</a>
+        {mand.length > 1 ? `${mand.length} mandatos ${CASA[p.casa].na}` : `Mandato ${CASA[p.casa].na}`}:{" "}
+        {mand
+          .map((m) => `${m.inicio.slice(0, 4)}–${m.fim ? m.fim.slice(0, 4) : "hoje"} (${[m.partido, m.uf].filter(Boolean).join("-")})`)
+          .join(", ")}{" "}
+        · <a href={p.fonte_url}>fonte oficial</a>
+      </p>
+      <p className={ui.fonte}>
+        Votos individuais publicados pela fonte oficial desde {p.casa === "camara" ? "2001" : "1991"}. Partido dos mandatos antigos ainda
+        em conferência.
       </p>
     </>
   );

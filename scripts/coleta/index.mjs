@@ -2,8 +2,10 @@
 //   node scripts/coleta/index.mjs                 → anos da legislatura atual (2023 até hoje)
 //   ANOS=2025,2026 node scripts/coleta/index.mjs  → só esses anos
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
+//   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
+// Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
 import * as camara from "./camara.mjs";
-import { registrar } from "./comum.mjs";
+import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
 import * as senado from "./senado.mjs";
 
@@ -36,8 +38,18 @@ if (fontes.includes("senado")) {
   for (const ano of anos) await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
 }
 
+if (fontes.includes("carreira")) {
+  const { data, error } = await db.from("estados").select("uf");
+  if (error) throw new Error(`estados: ${error.message}`);
+  const ufs = new Set(data.map((e) => e.uf));
+  const datas = await camara.legislaturas();
+  await etapa("camara:carreira", () => camara.carreira(ufs, datas));
+  await etapa("senado:carreira", () => senado.carreira(ufs, datas));
+}
+
+// A conferência compara com o placar oficial completo, por isso só vale para anos fora do histórico.
 if (fontes.includes("conferir")) {
-  for (const ano of anos) await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
+  for (const ano of anos.filter((a) => !camara.historico(a))) await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
 }
 
 if (falhas) {

@@ -13,8 +13,8 @@ export function numero(n: number | null | undefined) {
 }
 
 export const CASA = {
-  camara: { nome: "Câmara dos Deputados", cargo: "Deputado(a) federal" },
-  senado: { nome: "Senado Federal", cargo: "Senador(a)" },
+  camara: { nome: "Câmara dos Deputados", cargo: "Deputado(a) federal", na: "na Câmara" },
+  senado: { nome: "Senado Federal", cargo: "Senador(a)", na: "no Senado" },
 } as const;
 
 export type Voto = "sim" | "nao" | "abstencao" | "obstrucao" | "ausente" | "outro";
