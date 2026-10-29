@@ -32,4 +32,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run teste
+      # O build lê o banco (páginas pré-geradas). Chave publicável (só leitura, protegida pelas regras RLS).
       - run: npm run build
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
