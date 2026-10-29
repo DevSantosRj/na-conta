@@ -81,8 +81,23 @@ async function arquivo(nome, url) {
   }
 }
 
-// Tabelas oficiais para o Meu imposto
-await pagina("https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas", { links: /tabelas\/20|2026/i, max: 4000 });
-await pagina("https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026", { max: 9000 });
-await pagina("https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15270.htm", { max: 14000 });
-await pagina("https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal", { max: 6000 });
+// Tabelas oficiais para o Meu imposto: guarda as páginas inteiras
+{
+  const { mkdirSync, writeFileSync } = await import("node:fs");
+  mkdirSync("sonda-arquivos", { recursive: true });
+  const paginas = {
+    "receita-2026.html": "https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
+    "lei-15270.htm": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15270.htm",
+    "inss-tabela.html": "https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal",
+  };
+  for (const [nome, url] of Object.entries(paginas)) {
+    try {
+      const r = await fetch(url, { headers: { ...UA, Accept: "text/html" }, redirect: "follow" });
+      const b = Buffer.from(await r.arrayBuffer());
+      writeFileSync(`sonda-arquivos/${nome}`, b);
+      console.log(`${nome}: status ${r.status} · ${b.length} bytes`);
+    } catch (e) {
+      console.log(`${nome}: falhou ${e.message} ${e.cause?.code ?? ""}`);
+    }
+  }
+}
