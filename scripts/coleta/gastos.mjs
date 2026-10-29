@@ -36,11 +36,12 @@ export async function camara(ano) {
   const somas = new Map();
   let linhas = 0;
   let exemplo = null;
-  for await (const l of lerCsvArquivo(CAMARA(ano), ["nuDeputadoId", "numAno", "numMes", "txtDescricao", "vlrLiquido"], { zip: true })) {
+  for await (const l of lerCsvArquivo(CAMARA(ano), ["ideCadastro", "numAno", "numMes", "txtDescricao", "vlrLiquido"], { zip: true })) {
     linhas++;
     if (linhas === 50) exemplo = l;
-    const pid = `C-${l.nuDeputadoId}`;
-    if (!l.nuDeputadoId || !ids.has(pid) || Number(l.numAno) !== ano) continue;
+    // ideCadastro é o id do deputado na API (nuDeputadoId é um número interno do arquivo)
+    const pid = `C-${l.ideCadastro}`;
+    if (!l.ideCadastro || !ids.has(pid) || Number(l.numAno) !== ano) continue;
     const mes = Number(l.numMes);
     const valor = Number(l.vlrLiquido);
     if (!(mes >= 1 && mes <= 12) || !Number.isFinite(valor)) continue;
