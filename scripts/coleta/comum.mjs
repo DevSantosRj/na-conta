@@ -91,3 +91,36 @@ export async function idsExistentes(tabela, filtroCasa) {
     if (data.length < 1000) return ids;
   }
 }
+
+// Lê um CSV oficial que vem dentro de um .zip ou em outra codificação (latin1), linha a linha, só com as colunas pedidas.
+// O arquivo é baixado para uma pasta temporária e apagado no fim.
+export async function* lerCsvArquivo(endereco, colunas, { zip = false, latin1 = false, pularLinhas = 0 } = {}) {
+  const { mkdtempSync, writeFileSync, rmSync, createReadStream } = await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join } = await import("node:path");
+  const { spawn } = await import("node:child_process");
+  const { Transform } = await import("node:stream");
+
+  const r = await baixar(endereco, "*/*");
+  if (!r) return;
+  const pasta = mkdtempSync(join(tmpdir(), "na-conta-"));
+  const arquivo = join(pasta, zip ? "a.zip" : "a.csv");
+  writeFileSync(arquivo, Buffer.from(await r.arrayBuffer()));
+  try {
+    let fluxo = zip ? spawn("unzip", ["-p", arquivo]).stdout : createReadStream(arquivo);
+    if (latin1) {
+      const dec = new TextDecoder("latin1");
+      fluxo = fluxo.pipe(new Transform({ transform: (pedaco, _c, feito) => feito(null, dec.decode(pedaco, { stream: true })) }));
+    }
+    const leitor = fluxo.pipe(
+      parse({ delimiter: ";", bom: true, columns: true, relax_quotes: true, relax_column_count: true, skip_empty_lines: true, from_line: pularLinhas + 1 }),
+    );
+    for await (const linha of leitor) {
+      const so = {};
+      for (const c of colunas) so[c] = linha[c] ?? "";
+      yield so;
+    }
+  } finally {
+    rmSync(pasta, { recursive: true, force: true });
+  }
+}

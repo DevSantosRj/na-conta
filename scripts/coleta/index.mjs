@@ -4,6 +4,7 @@
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
 //   FONTES=senado-autorias                        → autoria de projetos dos senadores, carreira inteira
+//   FONTES=gastos                                 → cota parlamentar (CEAP/CEAPS) dos anos pedidos
 //   FONTES=ibge                                   → população de estados e municípios (IBGE/SIDRA)
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=cruzada                                → liga a ficha da Câmara e a do Senado da mesma pessoa
@@ -13,6 +14,7 @@ import * as camara from "./camara.mjs";
 import * as cruzada from "./cruzada.mjs";
 import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
+import * as gastos from "./gastos.mjs";
 import * as ibge from "./ibge.mjs";
 import * as presidencias from "./presidencias.mjs";
 import * as senado from "./senado.mjs";
@@ -22,7 +24,7 @@ const anos = process.env.ANOS
   ? process.env.ANOS.split(",").map(Number)
   : Array.from({ length: hoje - 2023 + 1 }, (_, i) => 2023 + i);
 // "conferir" compara os placares gravados com os oficiais (roda por padrão após a coleta)
-const fontes = (process.env.FONTES || "camara,senado,conferir").split(",");
+const fontes = (process.env.FONTES || "camara,senado,gastos,conferir").split(",");
 
 let falhas = 0;
 async function etapa(nome, fn) {
@@ -59,6 +61,11 @@ if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", 
 
 if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
 if (fontes.includes("ibge")) await etapa("ibge:populacao", ibge.populacao);
+// Cota parlamentar: soma por mês e categoria (Câmara e Senado)
+if (fontes.includes("gastos")) {
+  for (const ano of anos) await etapa(`gastos:camara:${ano}`, () => gastos.camara(ano));
+  for (const ano of anos) await etapa(`gastos:senado:${ano}`, () => gastos.senado(ano));
+}
 
 // Liga Câmara e Senado da mesma pessoa (antes da carreira, para os mandatos das fichas novas entrarem)
 if (fontes.includes("cruzada")) await etapa("cruzada", cruzada.ligar);
