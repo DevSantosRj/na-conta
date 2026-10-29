@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { ListaParlamentares } from "@/components/ListaParlamentares";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
-import { ESTADOS } from "@/dados/estados";
+import { doEstado, ESTADOS } from "@/dados/estados";
 import { estados, listarParlamentares } from "@/lib/dados";
 import { numero } from "@/lib/formato";
 import styles from "./estado.module.css";
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!e) return { title: "Estado não encontrado" };
   return {
     title: `${e.nome}: bancada no Congresso`,
-    description: `Quem representa ${e.nome} na Câmara e no Senado, quantos habitantes cada deputado representa e a bancada por partido — com a fonte oficial de cada dado.`,
+    description: `Quem representa os eleitores ${doEstado(e.uf, e.nome)} na Câmara e no Senado, quantos habitantes cada deputado representa e a bancada por partido — com a fonte oficial de cada dado.`,
   };
 }
 
@@ -83,8 +83,9 @@ async function Conteudo({ params }: { params: Props["params"] }) {
       </dl>
       {porDeputado && mediaBrasil && (
         <p className={styles.explica}>
-          Cada deputado de {e.nome} representa em média {numero(porDeputado)} habitantes. A média do país é de {numero(mediaBrasil)} habitantes por
-          deputado. {e.nome} é o {posicao}º estado com mais habitantes por deputado, de 27. A Constituição fixa no mínimo 8 e no máximo 70
+          Cada deputado {doEstado(e.uf, e.nome)} representa em média {numero(porDeputado)} habitantes. A média do país é de {numero(mediaBrasil)}{" "}
+          habitantes por deputado. No número de habitantes por deputado, {e.nome} ocupa a {posicao}ª posição entre as 27 unidades da federação
+          (da maior para a menor). A Constituição fixa no mínimo 8 e no máximo 70
           deputados por estado (
           <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm#art45">art. 45, § 1º</a>); cada estado tem 3 senadores (
           <a href="https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm#art46">art. 46</a>).

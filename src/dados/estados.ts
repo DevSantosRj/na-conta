@@ -19,7 +19,12 @@ export const ESTADOS: Estado[] = [
   { uf: "GO", nome: "Goiás", regiao: "Centro-Oeste", deputados: 17 },
   { uf: "MA", nome: "Maranhão", regiao: "Nordeste", deputados: 18 },
   { uf: "MT", nome: "Mato Grosso", regiao: "Centro-Oeste", deputados: 8 },
-  { uf: "MS", nome: "Mato Grosso do Sul", regiao: "Centro-Oeste", deputados: 8 },
+  {
+    uf: "MS",
+    nome: "Mato Grosso do Sul",
+    regiao: "Centro-Oeste",
+    deputados: 8,
+  },
   { uf: "MG", nome: "Minas Gerais", regiao: "Sudeste", deputados: 53 },
   { uf: "PA", nome: "Pará", regiao: "Norte", deputados: 17 },
   { uf: "PB", nome: "Paraíba", regiao: "Nordeste", deputados: 12 },
@@ -48,4 +53,39 @@ export const FAIXAS = [
 
 export function faixaDe(deputados: number) {
   return FAIXAS.find((f) => deputados <= f.ate) ?? FAIXAS[FAIXAS.length - 1];
+}
+
+// Preposição + artigo antes do nome do estado ("do Amapá", "da Bahia", "de São Paulo")
+const PREPOSICAO: Record<string, "do" | "da" | "de"> = {
+  AC: "do",
+  AL: "de",
+  AP: "do",
+  AM: "do",
+  BA: "da",
+  CE: "do",
+  DF: "do",
+  ES: "do",
+  GO: "de",
+  MA: "do",
+  MT: "de",
+  MS: "de",
+  MG: "de",
+  PA: "do",
+  PB: "da",
+  PR: "do",
+  PE: "de",
+  PI: "do",
+  RJ: "do",
+  RN: "do",
+  RS: "do",
+  RO: "de",
+  RR: "de",
+  SC: "de",
+  SP: "de",
+  SE: "de",
+  TO: "do",
+};
+
+export function doEstado(uf: string, nome: string) {
+  return `${PREPOSICAO[uf] ?? "de"} ${nome}`;
 }
