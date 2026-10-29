@@ -81,6 +81,8 @@ async function arquivo(nome, url) {
   }
 }
 
+// 10ª-b: filiações de senadores sem partido no mandato
+for (const c of [6014, 5934, 6370, 5945]) await json(`https://legis.senado.leg.br/dadosabertos/senador/${c}/filiacoes.json`);
 // 10ª rodada: diagnóstico arquivo a arquivo das transferências (mês de referência, formato dos números)
 {
   const CK = "https://www.tesourotransparente.gov.br/ckan/api/3/action";

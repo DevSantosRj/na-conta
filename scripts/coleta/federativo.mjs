@@ -21,8 +21,8 @@ const numero = (s) => {
 };
 const centavos = (v) => Math.round(v * 100) / 100;
 
-// Itens do FUNDEB que vêm de impostos do próprio estado (não são dinheiro da União)
-export const ITENS_ESTADUAIS = new Set(["ICMS", "IPVA", "ITCMD"]);
+// Itens do FUNDEB que vêm de impostos do próprio estado, e DEDU (origem não identificada): não entram como dinheiro da União
+export const ITENS_ESTADUAIS = new Set(["ICMS", "IPVA", "ITCMD", "ICME", "DEDU"]);
 
 export async function arrecadacao() {
   const somas = new Map(); // uf|ano -> { valor, meses:Set }
@@ -92,6 +92,13 @@ export async function transferencias({ desde = 2019 } = {}) {
       } catch (e) {
         console.log(`  ! ${arq.nome}: ${e.message.slice(0, 300)}`);
         continue;
+      }
+      // Alguns arquivos (ex.: setembro de 2024) vêm em centavos, sem separador decimal em nenhum valor
+      const decendios = linhas.length ? Object.keys(linhas[0]).filter((k) => /dec.ndio/i.test(k)) : [];
+      const emCentavos = linhas.length > 0 && !linhas.some((l) => decendios.some((k) => /[.,]/.test(String(l[k] ?? ""))));
+      if (emCentavos) {
+        console.log(`  ${arq.nome}: valores em centavos, convertidos para reais`);
+        for (const l of linhas) for (const k of decendios) l[k] = String(numero(l[k]) / 100);
       }
       const porMes = new Map();
       for (const l of linhas) {
