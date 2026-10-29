@@ -1,4 +1,4 @@
-// Sonda das fontes oficiais (4ª rodada): autoria de projetos no Senado (serviço /processo).
+// Sonda das fontes oficiais (5ª rodada): gastos (cota parlamentar), emendas e população por estado.
 // Rodadas anteriores: histórico do git e docs/fontes.md.
 
 const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
@@ -39,7 +39,7 @@ async function pagina(url, { links = null, max = 12000 } = {}) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 async function json(url) {
   console.log(`\n===== ${url}`);
   try {
@@ -52,21 +52,40 @@ async function json(url) {
   }
 }
 
-const S = "https://legis.senado.leg.br/dadosabertos";
+import { execSync } from "node:child_process";
+import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 
-// Ligação de carreiras: nomes das colunas do deputados.csv (só o cabeçalho, nenhum valor) e ficha do senador
-{
-  const r = await fetch("https://dadosabertos.camara.leg.br/arquivos/deputados/csv/deputados.csv", { headers: UA });
-  const leitor = r.body.getReader();
-  const { value } = await leitor.read();
-  await leitor.cancel();
-  console.log("deputados.csv colunas:", new TextDecoder().decode(value).split("\n")[0]);
+// Baixa um arquivo (zip ou csv), mostra tamanho, colunas, 2 linhas de exemplo e o total de linhas.
+async function arquivo(nome, url) {
+  console.log(`\n===== ${nome} · ${url}`);
+  try {
+    const r = await fetch(url, { headers: UA, redirect: "follow" });
+    const b = Buffer.from(await r.arrayBuffer());
+    console.log(`status ${r.status} · ${(b.length / 1e6).toFixed(1)} MB · ${r.headers.get("content-type")} · final ${r.url}`);
+    if (!r.ok) return;
+    const dir = `sonda-tmp/${nome}`;
+    mkdirSync(dir, { recursive: true });
+    if (b.subarray(0, 2).toString() === "PK") {
+      writeFileSync(`${dir}/a.zip`, b);
+      execSync(`cd ${dir} && unzip -o -q a.zip && rm a.zip`);
+    } else writeFileSync(`${dir}/a.csv`, b);
+    for (const f of readdirSync(dir)) {
+      const caminho = `${dir}/${f}`;
+      const linhas = execSync(`wc -l < "${caminho}"`).toString().trim();
+      const amostra = execSync(`head -c 3000 "${caminho}" | iconv -f latin1 -t utf-8 2>/dev/null || head -c 3000 "${caminho}"`).toString().split("\n").slice(0, 3);
+      console.log(`  ARQ ${f} · ${(statSync(caminho).size / 1e6).toFixed(1)} MB · ${linhas} linhas`);
+      for (const l of amostra) console.log(`    ${l.slice(0, 900)}`);
+    }
+  } catch (e) {
+    console.log("falhou:", e.message);
+  }
 }
-{
-  const r = await fetch(`${S}/senador/3830.json`, { headers: { ...UA, Accept: "application/json" } });
-  const d = await r.json();
-  const p = d?.DetalheParlamentar?.Parlamentar ?? {};
-  console.log("senador chaves:", Object.keys(p).join(","));
-  console.log("Identificacao:", JSON.stringify(p.IdentificacaoParlamentar));
-  console.log("DadosBasicos:", JSON.stringify(p.DadosBasicosParlamentar));
-}
+
+// Cota parlamentar (CEAP) da Câmara — arquivo anual
+await arquivo("ceap-camara-2025", "https://www.camara.leg.br/cotas/Ano-2025.csv.zip");
+// Cota do Senado (CEAPS) — arquivo anual
+await arquivo("ceaps-senado-2025", "https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_2025.csv");
+// Emendas parlamentares — download em lote do Portal da Transparência (sem token)
+await arquivo("emendas-portal", "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO");
+// População por estado (IBGE, estimativa mais recente)
+await json("https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N3[all]");
