@@ -89,6 +89,7 @@ async function arquivo(nome, url) {
     "receita-2026.html": "https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026",
     "lei-15270.htm": "https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15270.htm",
     "inss-tabela.html": "https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal",
+    "receita-exemplos.html": "https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/exemplos-de-aplicacao-da-lei-15-270-2025",
   };
   for (const [nome, url] of Object.entries(paginas)) {
     try {
