@@ -80,21 +80,22 @@ export async function registrar(fonte, trabalho) {
   }
 }
 
-export async function idsExistentes(tabela, filtroCasa) {
+export async function idsExistentes(tabela, filtroCasa, coluna = "id") {
   const ids = new Set();
   for (let de = 0; ; de += 1000) {
-    let q = db.from(tabela).select("id").range(de, de + 999);
+    // Paginação sempre ordenada, senão linhas podem se repetir ou sumir entre páginas
+    let q = db.from(tabela).select(coluna).order(coluna).range(de, de + 999);
     if (filtroCasa) q = q.eq("casa", filtroCasa);
     const { data, error } = await q;
     if (error) throw new Error(`${tabela}: ${error.message}`);
-    data.forEach((l) => ids.add(l.id));
+    data.forEach((l) => ids.add(l[coluna]));
     if (data.length < 1000) return ids;
   }
 }
 
 // Lê um CSV oficial que vem dentro de um .zip ou em outra codificação (latin1), linha a linha, só com as colunas pedidas.
 // O arquivo é baixado para uma pasta temporária e apagado no fim.
-export async function* lerCsvArquivo(endereco, colunas, { zip = false, latin1 = false, pularLinhas = 0 } = {}) {
+export async function* lerCsvArquivo(endereco, colunas, { zip = false, noZip = null, latin1 = false, pularLinhas = 0 } = {}) {
   const { mkdtempSync, writeFileSync, rmSync, createReadStream } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
@@ -115,7 +116,7 @@ export async function* lerCsvArquivo(endereco, colunas, { zip = false, latin1 = 
   try {
     let fluxo;
     if (zip) {
-      const proc = spawn("unzip", ["-p", arquivo]);
+      const proc = spawn("unzip", noZip ? ["-p", arquivo, noZip] : ["-p", arquivo]);
       proc.stderr.on("data", (d) => (erroUnzip += d));
       fluxo = proc.stdout;
     } else fluxo = createReadStream(arquivo);

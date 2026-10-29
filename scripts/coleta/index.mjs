@@ -4,6 +4,7 @@
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
 //   FONTES=senado-autorias                        → autoria de projetos dos senadores, carreira inteira
+//   FONTES=emendas                                → emendas parlamentares (todos os anos, Portal da Transparência)
 //   FONTES=gastos                                 → cota parlamentar (CEAP/CEAPS) dos anos pedidos
 //   FONTES=ibge                                   → população de estados e municípios (IBGE/SIDRA)
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
@@ -14,6 +15,7 @@ import * as camara from "./camara.mjs";
 import * as cruzada from "./cruzada.mjs";
 import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
+import * as emendas from "./emendas.mjs";
 import * as gastos from "./gastos.mjs";
 import * as ibge from "./ibge.mjs";
 import * as presidencias from "./presidencias.mjs";
@@ -61,6 +63,8 @@ if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", 
 
 if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
 if (fontes.includes("ibge")) await etapa("ibge:populacao", ibge.populacao);
+// Emendas (Portal da Transparência): arquivo único com todos os anos; na rodada diária, só às segundas
+if (fontes.includes("emendas") || (!process.env.FONTES && new Date().getUTCDay() === 1)) await etapa("emendas", emendas.carregar);
 // Cota parlamentar: soma por mês e categoria (Câmara e Senado)
 if (fontes.includes("gastos")) {
   for (const ano of anos) await etapa(`gastos:camara:${ano}`, () => gastos.camara(ano));

@@ -6,7 +6,7 @@ const SIDRA = (nivel) =>
 const FONTE = "https://sidra.ibge.gov.br/tabela/6579";
 
 // Código IBGE do estado → sigla
-const UF = {
+export const UF = {
   11: "RO",
   12: "AC",
   13: "AM",
