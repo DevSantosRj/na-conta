@@ -147,3 +147,73 @@
   align-items: center;
   gap: 6px;
 }
+
+.anos,
+.categorias {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.anoLink,
+.categorias li {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 36px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  color: var(--cor-texto);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.categorias li {
+  grid-template-columns: minmax(0, 1.4fr) 1fr auto;
+}
+
+.anoLink:hover {
+  background: var(--cor-fundo);
+}
+
+.anoLink[aria-current="true"] {
+  background: var(--cor-fundo);
+  font-weight: 700;
+}
+
+.anoRotulo {
+  font-family: var(--fonte-mono);
+}
+
+.catNome {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trilho {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--cor-esqueleto);
+  overflow: hidden;
+}
+
+.barra {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cor-principal);
+}
+
+.anoValor {
+  font-family: var(--fonte-mono);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.gastoAno {
+  margin-top: 12px;
+}

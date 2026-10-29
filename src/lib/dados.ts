@@ -222,3 +222,26 @@ export async function estados() {
   if (error) throw new Error(error.message);
   return data as EstadoInfo[];
 }
+
+export type LinhaGasto = { parlamentar_id: string; ano: number; mes: number; categoria: string; valor: number; documentos: number; fonte_url: string };
+
+// Cota parlamentar: somas por mês (desde 2023) ou por ano (mes = 0, até 2022)
+export async function gastosDoParlamentar(ids: string[]) {
+  "use cache";
+  cacheLife("hours");
+  ids.forEach((id) => cacheTag(`parlamentar-${id}`));
+  const linhas: LinhaGasto[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await db
+      .from("gastos_mensais")
+      .select("parlamentar_id, ano, mes, categoria, valor, documentos, fonte_url")
+      .in("parlamentar_id", ids)
+      .order("ano", { ascending: false })
+      .order("mes")
+      .order("categoria")
+      .range(de, de + 999);
+    if (error) throw new Error(error.message);
+    linhas.push(...(data as LinhaGasto[]).map((l) => ({ ...l, valor: Number(l.valor) })));
+    if (data.length < 1000) return linhas;
+  }
+}

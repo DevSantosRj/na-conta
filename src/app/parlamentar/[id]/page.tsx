@@ -4,8 +4,17 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
-import { buscarParlamentar, mandatos, POR_PAGINA, presidenciasDoParlamentar, proposicoesDoParlamentar, resumoVotos, votosDoParlamentar } from "@/lib/dados";
-import { CASA, data, numero, rotuloVoto, siglaProposicao, VOTO } from "@/lib/formato";
+import {
+  buscarParlamentar,
+  gastosDoParlamentar,
+  mandatos,
+  POR_PAGINA,
+  presidenciasDoParlamentar,
+  proposicoesDoParlamentar,
+  resumoVotos,
+  votosDoParlamentar,
+} from "@/lib/dados";
+import { CASA, categoriaLegivel, data, numero, reais, rotuloVoto, siglaProposicao, VOTO } from "@/lib/formato";
 import { ESTADOS } from "@/dados/estados";
 import { Seguir } from "./Seguir";
 import styles from "./parlamentar.module.css";
@@ -140,6 +149,7 @@ function Abas({ id, aba }: { id: string; aba: string }) {
   const itens = [
     { chave: "votacoes", nome: "Votações" },
     { chave: "proposicoes", nome: "Proposições" },
+    { chave: "gastos", nome: "Gastos" },
   ];
   return (
     <nav aria-label="Seções do perfil" className={styles.abas}>
@@ -181,13 +191,107 @@ function Paginacao({ id, aba, pagina, total }: { id: string; aba: string; pagina
 async function Conteudo({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
-  const aba = sp.aba === "proposicoes" ? "proposicoes" : "votacoes";
+  const aba = sp.aba === "proposicoes" || sp.aba === "gastos" ? sp.aba : "votacoes";
   const pagina = Math.max(1, Number(sp.pagina) || 1);
   const pe = await pessoa(id);
   if (!pe) notFound();
   const { ids } = pe;
   const duasCasas = ids.length > 1;
   const casaDe = (c: "camara" | "senado") => (duasCasas ? <span className={ui.selo}>{c === "camara" ? "Câmara" : "Senado"}</span> : null);
+
+  if (aba === "gastos") {
+    const linhas = await gastosDoParlamentar(ids);
+    const porAno = new Map<number, number>();
+    for (const l of linhas) porAno.set(l.ano, (porAno.get(l.ano) ?? 0) + l.valor);
+    const anosLista = [...porAno.keys()].sort((a, b) => b - a);
+    const anoPedido = Number(sp.ano);
+    const ano = anosLista.includes(anoPedido) ? anoPedido : anosLista[0];
+    const doAno = linhas.filter((l) => l.ano === ano);
+    const maiorAno = Math.max(...porAno.values(), 1);
+    const grupos = (["C", "S"] as const)
+      .map((pref) => {
+        const xs = doAno.filter((l) => l.parlamentar_id.startsWith(pref));
+        const cats = new Map<string, { valor: number; docs: number }>();
+        for (const l of xs) {
+          const c = cats.get(l.categoria) ?? { valor: 0, docs: 0 };
+          c.valor += l.valor;
+          c.docs += l.documentos;
+          cats.set(l.categoria, c);
+        }
+        return {
+          casa: pref === "C" ? ("camara" as const) : ("senado" as const),
+          total: xs.reduce((s2, l) => s2 + l.valor, 0),
+          docs: xs.reduce((s2, l) => s2 + l.documentos, 0),
+          fonte: xs[0]?.fonte_url,
+          mensal: xs.some((l) => l.mes > 0),
+          cats: [...cats.entries()].sort((a, b) => b[1].valor - a[1].valor),
+        };
+      })
+      .filter((g) => g.cats.length);
+    return (
+      <>
+        <Abas id={id} aba={aba} />
+        {!anosLista.length ? (
+          <p className={ui.vazio}>Nenhum gasto da cota parlamentar registrado.</p>
+        ) : (
+          <>
+            <section className={ui.cartao}>
+              <h2 className={ui.h2}>Cota parlamentar por ano</h2>
+              <p className={ui.apoio}>Toque em um ano para ver as categorias.</p>
+              <ul className={styles.anos}>
+                {anosLista.map((a) => (
+                  <li key={a}>
+                    <Link href={`/parlamentar/${id}?aba=gastos&ano=${a}`} scroll={false} aria-current={a === ano ? "true" : undefined} className={styles.anoLink}>
+                      <span className={styles.anoRotulo}>{a}</span>
+                      <span className={styles.trilho} aria-hidden="true">
+                        <span className={styles.barra} style={{ width: `${(porAno.get(a)! / maiorAno) * 100}%` }} />
+                      </span>
+                      <span className={styles.anoValor}>{reais(porAno.get(a)!)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+            {grupos.map((g) => {
+              const maior = Math.max(...g.cats.map(([, v]) => v.valor), 1);
+              return (
+                <section key={g.casa} className={`${ui.cartao} ${styles.gastoAno}`}>
+                  <h2 className={ui.h2}>
+                    {ano}
+                    {duasCasas ? (g.casa === "camara" ? " · Câmara" : " · Senado") : ""}: {reais(g.total)}
+                  </h2>
+                  <p className={ui.apoio}>
+                    {numero(g.docs)} {g.casa === "camara" ? "notas e recibos" : "despesas reembolsadas"}
+                    {g.mensal ? "" : " · neste ano o Na Conta guarda o total anual por categoria"}
+                  </p>
+                  <ul className={styles.categorias}>
+                    {g.cats.map(([c, v]) => (
+                      <li key={c}>
+                        <span className={styles.catNome}>{categoriaLegivel(c)}</span>
+                        <span className={styles.trilho} aria-hidden="true">
+                          <span className={styles.barra} style={{ width: `${(v.valor / maior) * 100}%` }} />
+                        </span>
+                        <span className={styles.anoValor}>{reais(v.valor)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {g.fonte && (
+                    <p className={ui.fonte}>
+                      Cada nota está no <a href={g.fonte}>arquivo oficial de {ano}</a> ({g.casa === "camara" ? "Câmara dos Deputados, CEAP" : "Senado Federal, CEAPS"}).
+                    </p>
+                  )}
+                </section>
+              );
+            })}
+          </>
+        )}
+        <p className={ui.fonte}>
+          Cota para o Exercício da Atividade Parlamentar: dinheiro público que reembolsa despesas do mandato (escritório, divulgação, passagens,
+          combustível etc.). Não inclui salário nem verba de gabinete. Valores líquidos, como publicados pela fonte.
+        </p>
+      </>
+    );
+  }
 
   if (aba === "proposicoes") {
     const { linhas, total } = await proposicoesDoParlamentar(ids, pagina);

@@ -42,3 +42,15 @@ export function siglaProposicao(tipo?: string | null, numero?: number | null, an
 export function semAcento(texto: string) {
   return texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
+
+export function reais(v: number) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+}
+
+// "COMBUSTÍVEIS E LUBRIFICANTES." → "Combustíveis e lubrificantes"
+export function categoriaLegivel(c: string) {
+  const t = c.trim().replace(/\.$/, "").replace(/\s+,/g, ",");
+  if (t !== t.toUpperCase()) return t;
+  const m = t.toLocaleLowerCase("pt-BR");
+  return m.charAt(0).toLocaleUpperCase("pt-BR") + m.slice(1);
+}
