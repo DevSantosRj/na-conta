@@ -49,7 +49,7 @@ export function reais(v: number) {
 
 // "COMBUSTÍVEIS E LUBRIFICANTES." → "Combustíveis e lubrificantes"
 export function categoriaLegivel(c: string) {
-  const t = c.trim().replace(/\.$/, "").replace(/\s+,/g, ",");
+  const t = c.trim().replace(/\.$/, "").replace(/\s*,\s*/g, ", ");
   if (t !== t.toUpperCase()) return t;
   const m = t.toLocaleLowerCase("pt-BR");
   return m.charAt(0).toLocaleUpperCase("pt-BR") + m.slice(1);
