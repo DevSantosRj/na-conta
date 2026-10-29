@@ -22,16 +22,18 @@ export function MapaBrasil() {
       <svg
         viewBox="0 0 640 639"
         role="img"
-        aria-label="Mapa do Brasil por estado, colorido pelo número de deputados federais"
+        aria-label="Mapa do Brasil por estado, colorido pelo número de deputados federais. Toque em um estado para ver a bancada."
         className={styles.mapa}
       >
         {CONTORNOS.map((c) => {
           const estado = porUF.get(c.uf)!;
           const faixa = faixaDe(estado.deputados);
           return (
-            <path key={c.uf} d={c.d} fill={faixa.fundo} stroke="#ffffff" strokeWidth={1} strokeLinejoin="round">
-              <title>{`${estado.nome}: ${estado.deputados} deputados`}</title>
-            </path>
+            <a key={c.uf} href={`/estado/${c.uf.toLowerCase()}`} className={styles.estado} aria-label={`${estado.nome}: ${estado.deputados} deputados. Ver a bancada`}>
+              <path d={c.d} fill={faixa.fundo} stroke="#ffffff" strokeWidth={1} strokeLinejoin="round">
+                <title>{`${estado.nome}: ${estado.deputados} deputados`}</title>
+              </path>
+            </a>
           );
         })}
         <g aria-hidden="true" className={styles.siglas}>
@@ -64,6 +66,13 @@ export function MapaBrasil() {
           })}
         </g>
       </svg>
+      <nav aria-label="Estados" className={styles.listaEstados}>
+        {ESTADOS.map((e) => (
+          <a key={e.uf} href={`/estado/${e.uf.toLowerCase()}`}>
+            {e.uf}
+          </a>
+        ))}
+      </nav>
       <figcaption className={styles.legenda}>
         <span className={styles.legendaTitulo}>Deputados federais:</span>
         {FAIXAS.map((f) => (

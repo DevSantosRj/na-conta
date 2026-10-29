@@ -48,3 +48,47 @@
   font-size: 12px;
   color: var(--cor-texto-3);
 }
+
+.estado path {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.estado:hover path,
+.estado:focus-visible path {
+  opacity: 0.8;
+  stroke: var(--cor-principal);
+  stroke-width: 2;
+}
+
+.estado:focus {
+  outline: none;
+}
+
+.listaEstados {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.listaEstados a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 36px;
+  padding: 0 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: var(--fonte-mono);
+  font-size: 13px;
+  color: var(--cor-texto);
+  text-decoration: none;
+}
+
+.listaEstados a:hover {
+  border-color: var(--cor-principal);
+  color: var(--cor-principal);
+}

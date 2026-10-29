@@ -4,6 +4,7 @@
 //   FONTES=camara node scripts/coleta/index.mjs   → só a Câmara (ou "senado")
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
 //   FONTES=senado-autorias                        → autoria de projetos dos senadores, carreira inteira
+//   FONTES=ibge                                   → população de estados e municípios (IBGE/SIDRA)
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=cruzada                                → liga a ficha da Câmara e a do Senado da mesma pessoa
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
@@ -12,6 +13,7 @@ import * as camara from "./camara.mjs";
 import * as cruzada from "./cruzada.mjs";
 import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
+import * as ibge from "./ibge.mjs";
 import * as presidencias from "./presidencias.mjs";
 import * as senado from "./senado.mjs";
 
@@ -56,6 +58,7 @@ if (fontes.includes("senado")) {
 if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", () => senado.autorias());
 
 if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
+if (fontes.includes("ibge")) await etapa("ibge:populacao", ibge.populacao);
 
 // Liga Câmara e Senado da mesma pessoa (antes da carreira, para os mandatos das fichas novas entrarem)
 if (fontes.includes("cruzada")) await etapa("cruzada", cruzada.ligar);

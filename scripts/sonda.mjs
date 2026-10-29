@@ -56,6 +56,7 @@ import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 
 // Baixa um arquivo (zip ou csv), mostra tamanho, colunas, 2 linhas de exemplo e o total de linhas.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function arquivo(nome, url) {
   console.log(`\n===== ${nome} · ${url}`);
   try {

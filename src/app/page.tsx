@@ -76,7 +76,7 @@ export default function Inicio() {
                 Quantos deputados cada estado tem
               </h2>
               <p className={styles.apoio}>
-                A Constituição distribui as cadeiras pela população, com piso de 8 e teto de 70 por estado.
+                A Constituição distribui as cadeiras pela população, com piso de 8 e teto de 70 por estado. Toque em um estado para ver a bancada.
               </p>
               <MapaBrasil />
             </div>

@@ -203,3 +203,22 @@ export async function presidenciasDoParlamentar(ids: string[]) {
   if (error) throw new Error(error.message);
   return data as Pick<Presidencia, "cargo" | "ano_inicio" | "ano_fim" | "inicio" | "fim">[];
 }
+
+export type EstadoInfo = {
+  uf: string;
+  nome: string;
+  regiao: string;
+  populacao: number | null;
+  populacao_ano: number | null;
+  cadeiras_camara: number;
+  fonte_url: string;
+};
+
+export async function estados() {
+  "use cache";
+  cacheLife("days");
+  cacheTag("estados");
+  const { data, error } = await db.from("estados").select("uf, nome, regiao, populacao, populacao_ano, cadeiras_camara, fonte_url").order("nome");
+  if (error) throw new Error(error.message);
+  return data as EstadoInfo[];
+}
