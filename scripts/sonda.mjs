@@ -1,4 +1,5 @@
-// Sonda das fontes oficiais (5ª rodada): gastos (cota parlamentar), emendas e população por estado.
+/* eslint-disable @typescript-eslint/no-unused-vars -- sonda: funções de apoio usadas em rodadas diferentes */
+// Sonda das fontes oficiais (6ª rodada): tabelas oficiais de IR e INSS de 2026 (Meu imposto).
 // Rodadas anteriores: histórico do git e docs/fontes.md.
 
 const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
@@ -14,7 +15,6 @@ const texto = (html) =>
     .replace(/\n\s*\n+/g, "\n")
     .trim();
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function pagina(url, { links = null, max = 12000 } = {}) {
   console.log(`\n===== ${url}`);
   try {
@@ -56,7 +56,6 @@ import { execSync } from "node:child_process";
 import { mkdirSync, readdirSync, statSync, writeFileSync } from "node:fs";
 
 // Baixa um arquivo (zip ou csv), mostra tamanho, colunas, 2 linhas de exemplo e o total de linhas.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function arquivo(nome, url) {
   console.log(`\n===== ${nome} · ${url}`);
   try {
@@ -82,7 +81,8 @@ async function arquivo(nome, url) {
   }
 }
 
-// População por estado (IBGE): duas portas oficiais
-await json("https://apisidra.ibge.gov.br/values/t/6579/n3/all/v/9324/p/last");
-await json("https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N3[all]");
-await json("https://servicodados.ibge.gov.br/api/v1/localidades/estados");
+// Tabelas oficiais para o Meu imposto
+await pagina("https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas", { links: /tabelas\/20|2026/i, max: 4000 });
+await pagina("https://www.gov.br/receitafederal/pt-br/assuntos/meu-imposto-de-renda/tabelas/2026", { max: 9000 });
+await pagina("https://www.planalto.gov.br/ccivil_03/_ato2023-2026/2025/lei/l15270.htm", { max: 14000 });
+await pagina("https://www.gov.br/inss/pt-br/direitos-e-deveres/inscricao-e-contribuicao/tabela-de-contribuicao-mensal", { max: 6000 });
