@@ -277,3 +277,35 @@ export async function autorias({ desde = null } = {}) {
   }
   return n;
 }
+
+// Partido em cada mandato anterior: filiações oficiais do senador (/senador/{codigo}/filiacoes).
+// Entram os partidos com filiação vigente em algum momento da legislatura, em ordem ("PMDB → MDB").
+export async function partidos() {
+  const { data, error } = await db.from("mandatos").select("parlamentar_id, legislatura, inicio, fim").eq("casa", "senado").eq("partido", "").range(0, 19999);
+  if (error) throw new Error(`mandatos: ${error.message}`);
+  const porPessoa = new Map();
+  for (const m of data) porPessoa.set(m.parlamentar_id, [...(porPessoa.get(m.parlamentar_id) ?? []), m]);
+  let n = 0;
+  const pessoas = [...porPessoa];
+  for (let i = 0; i < pessoas.length; i += 5) {
+    await Promise.all(
+      pessoas.slice(i, i + 5).map(async ([pid, mands]) => {
+        const r = await baixarJson(`${S}/senador/${pid.slice(2)}/filiacoes.json`);
+        const fil = lista(r?.FiliacaoParlamentar?.Parlamentar?.Filiacoes?.Filiacao)
+          .map((f) => ({ sigla: f.Partido?.SiglaPartido, de: (f.DataFiliacao ?? "").slice(0, 10), ate: (f.DataDesfiliacao ?? "9999-12-31").slice(0, 10) }))
+          .filter((f) => f.sigla && f.de)
+          .sort((a, b) => a.de.localeCompare(b.de));
+        for (const m of mands) {
+          const seq = [];
+          for (const f of fil) if (f.de <= m.fim && f.ate >= m.inicio && seq.at(-1) !== f.sigla) seq.push(f.sigla);
+          if (!seq.length) continue;
+          const { error: e } = await db.from("mandatos").update({ partido: seq.join(" → ") }).eq("parlamentar_id", pid).eq("legislatura", m.legislatura);
+          if (e) throw new Error(`mandatos: ${e.message}`);
+          n++;
+        }
+      }),
+    );
+  }
+  console.log(`  ${n} de ${data.length} mandato(s) antigo(s) do Senado com partido`);
+  return n;
+}

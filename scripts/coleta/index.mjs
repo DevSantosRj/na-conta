@@ -9,6 +9,7 @@
 //   FONTES=ibge                                   → população de estados e municípios (IBGE/SIDRA)
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=cruzada                                → liga a ficha da Câmara e a do Senado da mesma pessoa
+//   FONTES=partidos                               → partido em cada mandato anterior (histórico oficial)
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
 import * as camara from "./camara.mjs";
@@ -84,6 +85,11 @@ if (fontes.includes("carreira")) {
 }
 
 // A conferência compara com o placar oficial completo, por isso só vale para anos fora do histórico.
+if (fontes.includes("partidos") || fontes.includes("carreira")) {
+  await etapa("camara:partidos", camara.partidos);
+  await etapa("senado:partidos", senado.partidos);
+}
+
 if (fontes.includes("conferir")) {
   for (const ano of anos.filter((a) => !camara.historico(a))) await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
 }

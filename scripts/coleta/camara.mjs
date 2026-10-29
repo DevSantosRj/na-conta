@@ -260,3 +260,32 @@ export async function carreira(ufsValidas, datas) {
   }
   return gravar("mandatos", mandatos, (l) => `${l.parlamentar_id}|${l.legislatura}`, "parlamentar_id,legislatura");
 }
+
+// Partido em cada mandato anterior: histórico oficial do deputado (/deputados/{id}/historico).
+// Se mudou de partido dentro da legislatura, guarda a sequência ("PT → PSB").
+export async function partidos() {
+  const { data, error } = await db.from("mandatos").select("parlamentar_id, legislatura").eq("casa", "camara").eq("partido", "").range(0, 19999);
+  if (error) throw new Error(`mandatos: ${error.message}`);
+  const porPessoa = new Map();
+  for (const m of data) porPessoa.set(m.parlamentar_id, [...(porPessoa.get(m.parlamentar_id) ?? []), m.legislatura]);
+  let n = 0;
+  const pessoas = [...porPessoa];
+  for (let i = 0; i < pessoas.length; i += 5) {
+    await Promise.all(
+      pessoas.slice(i, i + 5).map(async ([pid, legs]) => {
+        const r = await baixarJson(`${API}/deputados/${pid.slice(2)}/historico`);
+        const hist = (r?.dados ?? []).slice().sort((a, b) => String(a.dataHora).localeCompare(String(b.dataHora)));
+        for (const leg of legs) {
+          const seq = [];
+          for (const h of hist) if (Number(h.idLegislatura) === leg && h.siglaPartido && seq.at(-1) !== h.siglaPartido) seq.push(h.siglaPartido);
+          if (!seq.length) continue;
+          const { error: e } = await db.from("mandatos").update({ partido: seq.join(" → ") }).eq("parlamentar_id", pid).eq("legislatura", leg);
+          if (e) throw new Error(`mandatos: ${e.message}`);
+          n++;
+        }
+      }),
+    );
+  }
+  console.log(`  ${n} de ${data.length} mandato(s) antigo(s) da Câmara com partido`);
+  return n;
+}
