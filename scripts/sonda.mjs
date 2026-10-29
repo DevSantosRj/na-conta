@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- sonda: funções de apoio usadas em rodadas diferentes */
-// Sonda das fontes oficiais (9ª rodada): formato das transferências constitucionais.
+// Sonda das fontes oficiais (10ª rodada): diagnóstico dos arquivos de transferências.
 // Rodadas anteriores: histórico do git e docs/fontes.md.
 
 const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
@@ -81,25 +81,31 @@ async function arquivo(nome, url) {
   }
 }
 
-// 9ª rodada: formato dos arquivos mensais de transferências constitucionais (estados e municípios)
+// 10ª rodada: diagnóstico arquivo a arquivo das transferências (mês de referência, formato dos números)
 {
   const CK = "https://www.tesourotransparente.gov.br/ckan/api/3/action";
-  for (const [id, alvo] of [["8add38c3-cf27-4428-940e-806548cac95c", "Transferencia_Mensal_Estados_202609"], ["af4e7c47-2132-4d9a-bd7c-34e28a210b03", "Transferencia_Mensal_Municipios_202609"], ["af4e7c47-2132-4d9a-bd7c-34e28a210b03", "Transferencia_Mensal_Municipios_202512"]]) {
+  for (const [id, rot] of [["8add38c3-cf27-4428-940e-806548cac95c", "Estados"], ["af4e7c47-2132-4d9a-bd7c-34e28a210b03", "Municipios"]]) {
     const d = await (await fetch(`${CK}/package_show?id=${id}`, { headers: UA })).json();
-    const nomes = (d.result?.resources ?? []).map((x) => x.name);
-    console.log(`\n${id}: ${nomes.length} recursos; municipais recentes: ${nomes.filter((n) => /202[3-6]/.test(n)).join(", ").slice(0, 1500)}`);
-    const r = (d.result?.resources ?? []).find((x) => x.name.startsWith(alvo));
-    if (!r) { console.log(`sem ${alvo}`); continue; }
-    const resp = await fetch(r.url, { headers: UA });
-    const b = Buffer.from(await resp.arrayBuffer());
-    const t = new TextDecoder("latin1").decode(b);
-    const linhas = t.split(/\r?\n/);
-    console.log(`\n===== ${alvo} · ${r.url} · ${b.length} bytes · ${linhas.length} linhas`);
-    for (const l of linhas.slice(0, 8)) console.log(`  ${l.slice(0, 600)}`);
-    const cols = linhas[0].split(";");
-    for (let c = 0; c < cols.length; c++) {
-      const vals = new Set(linhas.slice(1, 6000).map((l) => l.split(";")[c]));
-      if (vals.size < 40) console.log(`  COL ${cols[c]}: ${[...vals].slice(0, 40).join(" | ")}`);
+    const res = (d.result?.resources ?? []).filter((x) => /Mensal/.test(x.name) && /20(19|2\d)/.test(x.name));
+    console.log(`\n===== ${rot}: ${res.length} arquivos`);
+    for (const r of res) {
+      try {
+        const b = Buffer.from(await (await fetch(r.url, { headers: UA })).arrayBuffer());
+        const t = new TextDecoder("latin1").decode(b).split(/\r?\n/);
+        const cab = t[0];
+        const meses = new Map();
+        let amostra = "";
+        for (const l of t.slice(1)) {
+          const c = l.split(";");
+          if (c.length < 6) continue;
+          const off = rot === "Municipios" ? 1 : 0;
+          const k = `${c[1 + off]}-${c[2 + off]}`;
+          meses.set(k, (meses.get(k) ?? 0) + 1);
+          if (!amostra && c[off] === "SP" && /^FP[EM]$/.test(c[6 + off])) amostra = l.slice(0, 160);
+          if (!amostra && rot === "Municipios" && c[1] === "SP" && c[7] === "FPM") amostra = l.slice(0, 160);
+        }
+        console.log(`${r.name} | ${(r.last_modified ?? r.created ?? "").slice(0, 10)} | ${[...meses].map(([k, n]) => `${k}:${n}`).join(" ")} | cab ${cab.slice(0, 90)} | ex ${amostra}`);
+      } catch (e) { console.log(`${r.name} falhou ${e.message}`); }
     }
   }
 }

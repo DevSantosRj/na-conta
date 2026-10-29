@@ -126,7 +126,7 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
       {porCasa.map(({ casa, lista }) => (
         <p key={casa} className={ui.fonte}>
           {lista.length > 1 ? `${lista.length} mandatos ${CASA[casa].na}` : `Mandato ${CASA[casa].na}`}:{" "}
-          {lista.map((m) => `${anos(m.inicio, m.fim)} (${[m.partido, m.uf].filter(Boolean).join("-")})`).join(", ")}
+          {lista.map((m) => `${anos(m.inicio, m.fim)} (${[m.partido, m.uf].filter(Boolean).join(" · ")})`).join(", ")}
         </p>
       ))}
       <p className={ui.fonte}>
