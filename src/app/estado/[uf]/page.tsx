@@ -173,7 +173,13 @@ async function Conteudo({ params }: { params: Props["params"] }) {
                 <li key={grupo}>
                   <span>{grupo}</span>
                   <span className={styles.qtd}>
-                    {reaisCurto(v.estado + v.municipios)} · estado {reaisCurto(v.estado)} · prefeituras {reaisCurto(v.municipios)}
+                    {[
+                      reaisCurto(v.estado + v.municipios),
+                      v.estado > 0 && v.municipios > 0 ? `estado ${reaisCurto(v.estado)}` : v.estado > 0 ? "para o estado" : "",
+                      v.estado > 0 && v.municipios > 0 ? `prefeituras ${reaisCurto(v.municipios)}` : v.municipios > 0 ? "para as prefeituras" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                 </li>
               ))}
@@ -193,7 +199,7 @@ async function Conteudo({ params }: { params: Props["params"] }) {
               <span>
                 {l.ano}
                 {(l.meses_arrecadacao < 12 || (l.meses_transferencias ?? 12) < 12) && (
-                  <small> ({l.meses_transferencias ?? l.meses_arrecadacao} meses)</small>
+                  <small>{` (${Math.min(l.meses_arrecadacao, l.meses_transferencias ?? 12)} meses)`}</small>
                 )}
               </span>
               <span className={styles.qtd}>
