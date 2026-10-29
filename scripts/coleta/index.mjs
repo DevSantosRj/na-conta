@@ -5,9 +5,11 @@
 //   FONTES=proposicoes                            → só proposições da Câmara (anos antigos)
 //   FONTES=senado-autorias                        → autoria de projetos dos senadores, carreira inteira
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
+//   FONTES=cruzada                                → liga a ficha da Câmara e a do Senado da mesma pessoa
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
 import * as camara from "./camara.mjs";
+import * as cruzada from "./cruzada.mjs";
 import { db, registrar } from "./comum.mjs";
 import { conferirCamara } from "./conferir.mjs";
 import * as presidencias from "./presidencias.mjs";
@@ -54,6 +56,9 @@ if (fontes.includes("senado")) {
 if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", () => senado.autorias());
 
 if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
+
+// Liga Câmara e Senado da mesma pessoa (antes da carreira, para os mandatos das fichas novas entrarem)
+if (fontes.includes("cruzada")) await etapa("cruzada", cruzada.ligar);
 
 if (fontes.includes("carreira")) {
   const { data, error } = await db.from("estados").select("uf");
