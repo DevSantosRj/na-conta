@@ -35,8 +35,10 @@ export async function camara(ano) {
   const ids = await idsExistentes("parlamentares", "camara");
   const somas = new Map();
   let linhas = 0;
+  let exemplo = null;
   for await (const l of lerCsvArquivo(CAMARA(ano), ["nuDeputadoId", "numAno", "numMes", "txtDescricao", "vlrLiquido"], { zip: true })) {
     linhas++;
+    if (linhas === 50) exemplo = l;
     const pid = `C-${l.nuDeputadoId}`;
     if (!l.nuDeputadoId || !ids.has(pid) || Number(l.numAno) !== ano) continue;
     const mes = Number(l.numMes);
@@ -45,6 +47,7 @@ export async function camara(ano) {
     somar(somas, pid, ano, mes, l.txtDescricao.trim(), valor, CAMARA(ano));
   }
   if (!linhas) return 0;
+  if (!somas.size) throw new Error(`Câmara ${ano}: ${linhas} linhas lidas e nenhuma aceita · ${ids.size} deputados no banco · exemplo: ${JSON.stringify(exemplo)}`);
   return regravar("C", ano, somas);
 }
 
