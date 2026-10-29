@@ -402,3 +402,48 @@ export async function artigosPublicados() {
   if (error) throw new Error(error.message);
   return data as Artigo[];
 }
+
+// ===== Pacto federativo =====
+export type LinhaPacto = {
+  uf: string;
+  ano: number;
+  arrecadacao: number;
+  meses_arrecadacao: number;
+  transferencias_estado: number;
+  transferencias_municipios: number;
+  meses_transferencias: number | null;
+};
+
+export async function pactoFederativo() {
+  "use cache";
+  cacheLife("days");
+  cacheTag("federativo");
+  const { data, error } = await db.from("pacto_federativo").select("*").gte("ano", 2019).order("ano", { ascending: false }).range(0, 999);
+  if (error) throw new Error(error.message);
+  return data.map((l) => ({
+    ...l,
+    arrecadacao: Number(l.arrecadacao),
+    transferencias_estado: Number(l.transferencias_estado),
+    transferencias_municipios: Number(l.transferencias_municipios),
+  })) as LinhaPacto[];
+}
+
+export type GrupoTransferencia = { ano: number; destino: "estado" | "municipios"; grupo: string; federal: boolean; valor: number; meses: number };
+
+export async function transferenciasDoEstado(uf: string) {
+  "use cache";
+  cacheLife("days");
+  cacheTag("federativo");
+  const { data, error } = await db.from("transferencias_grupos").select("ano, destino, grupo, federal, valor, meses").eq("uf", uf).order("ano", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data.map((l) => ({ ...l, valor: Number(l.valor) })) as GrupoTransferencia[];
+}
+
+export async function transferenciasDoMunicipio(ibge: number) {
+  "use cache";
+  cacheLife("days");
+  cacheTag("federativo");
+  const { data, error } = await db.from("transferencias_municipios").select("ano, meses, fpm, federal, fonte_url").eq("municipio_id", ibge).order("ano", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data.map((l) => ({ ano: l.ano as number, meses: l.meses as number, fpm: Number(l.fpm), federal: Number(l.federal), fonte_url: l.fonte_url as string }));
+}

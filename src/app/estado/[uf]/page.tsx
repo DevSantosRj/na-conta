@@ -6,8 +6,8 @@ import { ListaParlamentares } from "@/components/ListaParlamentares";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
 import { doEstado, ESTADOS } from "@/dados/estados";
-import { emendasDoEstado, estados, listarParlamentares, municipiosDoEstado } from "@/lib/dados";
-import { numero, reais } from "@/lib/formato";
+import { emendasDoEstado, estados, listarParlamentares, municipiosDoEstado, pactoFederativo, transferenciasDoEstado } from "@/lib/dados";
+import { numero, reais, reaisCurto } from "@/lib/formato";
 import styles from "./estado.module.css";
 
 type Props = PageProps<"/estado/[uf]">;
@@ -33,7 +33,26 @@ async function Conteudo({ params }: { params: Props["params"] }) {
   const e = todos.find((x) => x.uf === uf);
   if (!e) notFound();
 
-  const [lista, emendas, municipios] = await Promise.all([listarParlamentares(), emendasDoEstado(uf), municipiosDoEstado(uf)]);
+  const [lista, emendas, municipios, pactoTodos, grupos] = await Promise.all([
+    listarParlamentares(),
+    emendasDoEstado(uf),
+    municipiosDoEstado(uf),
+    pactoFederativo(),
+    transferenciasDoEstado(uf),
+  ]);
+  // Pacto federativo: anos do estado, do mais recente ao mais antigo
+  const pacto = pactoTodos.filter((l) => l.uf === uf).sort((a, b) => b.ano - a.ano);
+  const anoCompleto = pacto.find((l) => l.meses_arrecadacao === 12 && l.meses_transferencias === 12)?.ano;
+  const ultimo = pacto.find((l) => l.ano === anoCompleto);
+  const gruposAno = grupos.filter((g) => g.ano === anoCompleto);
+  const porGrupo = new Map<string, { estado: number; municipios: number; federal: boolean }>();
+  for (const g of gruposAno) {
+    const v = porGrupo.get(g.grupo) ?? { estado: 0, municipios: 0, federal: g.federal };
+    v[g.destino] += g.valor;
+    porGrupo.set(g.grupo, v);
+  }
+  const gruposOrdenados = [...porGrupo.entries()].filter(([, v]) => v.federal).sort((a, b) => b[1].estado + b[1].municipios - (a[1].estado + a[1].municipios));
+  const estaduais = porGrupo.get("FUNDEB – impostos estaduais");
   const parlamentares = lista.filter((p) => p.ativo && p.uf === uf);
   const nomeMun = new Map(municipios.map((m) => [m.ibge_id, m.nome]));
   const maiorAno = Math.max(...emendas.porAno.map((a) => a.empenhado), 1);
@@ -116,6 +135,78 @@ async function Conteudo({ params }: { params: Props["params"] }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className={styles.secao} aria-labelledby="pacto">
+        <h2 id="pacto" className={ui.h2}>
+          Pacto federativo
+        </h2>
+        <p className={ui.apoio}>
+          Tributos federais arrecadados no estado e repasses constitucionais da União ao governo estadual e às prefeituras.{" "}
+          <Link href="/pacto-federativo">Comparar com os outros estados</Link>
+        </p>
+        {ultimo && (
+          <>
+            <dl className={styles.numeros}>
+              <div className={ui.cartao}>
+                <dt>Arrecadação federal em {ultimo.ano}</dt>
+                <dd>{reaisCurto(ultimo.arrecadacao)}</dd>
+              </div>
+              <div className={ui.cartao}>
+                <dt>Repasses da União em {ultimo.ano}</dt>
+                <dd>{reaisCurto(ultimo.transferencias_estado + ultimo.transferencias_municipios)}</dd>
+              </div>
+              <div className={ui.cartao}>
+                <dt>Repasse a cada R$ 100 arrecadados</dt>
+                <dd>
+                  R${" "}
+                  {(ultimo.arrecadacao ? ((ultimo.transferencias_estado + ultimo.transferencias_municipios) / ultimo.arrecadacao) * 100 : 0).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </dd>
+              </div>
+            </dl>
+            <h3 className={styles.h3}>Repasses de {ultimo.ano} por tipo</h3>
+            <ul className={styles.ranking}>
+              {gruposOrdenados.map(([grupo, v]) => (
+                <li key={grupo}>
+                  <span>{grupo}</span>
+                  <span className={styles.qtd}>
+                    {reaisCurto(v.estado + v.municipios)} · estado {reaisCurto(v.estado)} · prefeituras {reaisCurto(v.municipios)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {estaduais && (
+              <p className={styles.explica}>
+                Fora da conta: {reaisCurto(estaduais.estado + estaduais.municipios)} do FUNDEB formados por impostos do próprio estado (ICMS, IPVA,
+                ITCMD), que o Tesouro distribui mas não são dinheiro da União.
+              </p>
+            )}
+          </>
+        )}
+        <h3 className={styles.h3}>Ano a ano</h3>
+        <ul className={styles.ranking}>
+          {pacto.map((l) => (
+            <li key={l.ano}>
+              <span>
+                {l.ano}
+                {(l.meses_arrecadacao < 12 || (l.meses_transferencias ?? 12) < 12) && (
+                  <small> ({l.meses_transferencias ?? l.meses_arrecadacao} meses)</small>
+                )}
+              </span>
+              <span className={styles.qtd}>
+                arrecadação {reaisCurto(l.arrecadacao)} · repasses {reaisCurto(l.transferencias_estado + l.transferencias_municipios)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className={ui.fonte}>
+          Fontes: <a href="https://www.gov.br/receitafederal/dados/arrecadacao-estado.csv">Receita Federal, arrecadação por estado</a> ·{" "}
+          <a href="https://www.tesourotransparente.gov.br/ckan/dataset/transferencias-constitucionais-para-estados">Tesouro Nacional, transferências constitucionais</a>{" "}
+          · <Link href="/pacto-federativo#como-ler">como ler estes números</Link>
+        </p>
       </section>
 
       <section className={styles.secao} aria-labelledby="emendas">

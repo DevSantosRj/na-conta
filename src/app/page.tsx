@@ -61,6 +61,9 @@ export default function Inicio() {
             <Link href="/parlamentares" className={styles.chamada}>
               Ver como cada parlamentar votou
             </Link>
+            <Link href="/pacto-federativo" className={styles.chamadaSecundaria}>
+              Pacto federativo
+            </Link>
             <Link href="/presidencias" className={styles.chamadaSecundaria}>
               Presidências
             </Link>

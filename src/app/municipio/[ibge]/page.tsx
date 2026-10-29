@@ -6,8 +6,8 @@ import { ResumoEmendas } from "@/components/ResumoEmendas";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
 import { ESTADOS } from "@/dados/estados";
-import { emendasDoMunicipio, municipio } from "@/lib/dados";
-import { numero } from "@/lib/formato";
+import { emendasDoMunicipio, municipio, transferenciasDoMunicipio } from "@/lib/dados";
+import { numero, reais, reaisCurto } from "@/lib/formato";
 
 type Props = PageProps<"/municipio/[ibge]">;
 
@@ -16,8 +16,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const m = /^\d{7}$/.test(ibge) ? await municipio(Number(ibge)) : null;
   if (!m) return { title: "Município não encontrado" };
   return {
-    title: `${m.nome} (${m.uf}): emendas parlamentares`,
-    description: `Quanto ${m.nome} recebeu em emendas parlamentares desde 2014, quem indicou e para quais áreas — com a fonte oficial.`,
+    title: `${m.nome} (${m.uf}): emendas e repasses da União`,
+    description: `Quanto ${m.nome} recebeu em repasses constitucionais da União e em emendas parlamentares, quem indicou e para quais áreas — com a fonte oficial.`,
   };
 }
 
@@ -26,7 +26,7 @@ async function Conteudo({ params }: { params: Props["params"] }) {
   if (!/^\d{7}$/.test(ibge)) notFound();
   const m = await municipio(Number(ibge));
   if (!m) notFound();
-  const linhas = await emendasDoMunicipio(m.ibge_id);
+  const [linhas, repasses] = await Promise.all([emendasDoMunicipio(m.ibge_id), transferenciasDoMunicipio(m.ibge_id)]);
   const estado = ESTADOS.find((e) => e.uf === m.uf);
   return (
     <>
@@ -38,6 +38,30 @@ async function Conteudo({ params }: { params: Props["params"] }) {
         {estado?.nome ?? m.uf}
         {m.populacao ? ` · ${numero(m.populacao)} habitantes (IBGE, ${m.populacao_ano})` : ""}
       </p>
+      {repasses.length > 0 && (
+        <>
+          <h2 className={ui.h2} style={{ marginTop: 28 }}>
+            Repasses constitucionais da União à prefeitura
+          </h2>
+          <p className={ui.apoio}>
+            Dinheiro que a Constituição manda a União repassar: FPM, parte federal do FUNDEB, royalties, ITR e outros. Não inclui a parte do FUNDEB
+            formada por impostos do estado.
+          </p>
+          <ul className={ui.lista} style={{ marginTop: 12 }}>
+            {repasses.map((r) => (
+              <li key={r.ano} className={ui.cartao}>
+                <strong>{r.ano}</strong>
+                {r.meses < 12 ? ` (${r.meses} meses)` : ""}: {reaisCurto(r.federal)} no total, dos quais {reaisCurto(r.fpm)} de FPM
+                {m.populacao ? ` · ${reais(r.federal / m.populacao)} por habitante` : ""}
+              </li>
+            ))}
+          </ul>
+          <p className={ui.fonte}>
+            Fonte: <a href={repasses[0].fonte_url}>Tesouro Nacional, transferências constitucionais para municípios</a> ·{" "}
+            <Link href={`/estado/${m.uf.toLowerCase()}#pacto`}>pacto federativo do estado</Link>
+          </p>
+        </>
+      )}
       <h2 className={ui.h2} style={{ marginTop: 28 }}>
         Emendas parlamentares recebidas desde 2014
       </h2>

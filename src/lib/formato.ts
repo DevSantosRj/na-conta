@@ -65,3 +65,13 @@ export function nomeProprio(s: string) {
     .map((p, i) => (i > 0 && pequenas.has(p) ? p : p.charAt(0).toLocaleUpperCase("pt-BR") + p.slice(1)))
     .join(" ");
 }
+
+// Valores grandes por extenso curto: R$ 2,86 tri · R$ 163,9 bi · R$ 820,4 mi
+export function reaisCurto(v: number) {
+  const a = Math.abs(v);
+  const f = (x: number, casas: number) => x.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas });
+  if (a >= 1e12) return `R$ ${f(v / 1e12, 2)} tri`;
+  if (a >= 1e9) return `R$ ${f(v / 1e9, 1)} bi`;
+  if (a >= 1e6) return `R$ ${f(v / 1e6, 1)} mi`;
+  return reais(v);
+}

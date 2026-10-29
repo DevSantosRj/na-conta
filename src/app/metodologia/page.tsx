@@ -17,6 +17,9 @@ const FONTES: [string, string, string, string][] = [
   ["Cota parlamentar", "Câmara (CEAP) e Senado (CEAPS) — arquivos anuais", "https://www.camara.leg.br/transparencia/gastos-parlamentares", "desde 2008"],
   ["Emendas parlamentares", "Portal da Transparência (CGU) — download em lote", "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares", "desde 2014"],
   ["População", "IBGE — SIDRA, tabela 6579 (estimativas)", "https://sidra.ibge.gov.br/tabela/6579", "estimativa mais recente"],
+  ["Arrecadação federal por estado", "Receita Federal — arrecadação por estado (arquivo mensal)", "https://www.gov.br/receitafederal/dados/arrecadacao-estado.csv", "desde 2000; pacto federativo a partir de 2019"],
+  ["Repasses constitucionais", "Tesouro Nacional — transferências a estados e municípios (arquivos mensais)", "https://www.tesourotransparente.gov.br/ckan/dataset/transferencias-constitucionais-para-estados", "desde 2019; alguns meses não foram publicados"],
+  ["Partido em mandatos anteriores", "Câmara (histórico do deputado) e Senado (filiações)", "https://dadosabertos.camara.leg.br", "quando mudou de partido na legislatura, mostra a sequência"],
   ["Presidências", "Arquivo Nacional, Câmara e Senado — listas oficiais", "/presidencias", "República desde 1889; Câmara e Senado desde 1826"],
   ["Meu imposto", "Receita Federal e INSS — tabelas oficiais de 2026", "/meu-imposto", "conferido com os exemplos oficiais da Receita"],
 ];
@@ -82,6 +85,12 @@ export default function Metodologia() {
             </li>
             <li>
               <strong>Gastos.</strong> Guardamos a soma por mês e categoria (por ano até 2022). Cada nota fiscal está no arquivo oficial indicado na página.
+            </li>
+            <li>
+              <strong>Pacto federativo.</strong> A arrecadação é a soma de todos os tributos federais que a Receita atribui ao estado (pelo domicílio de quem
+              paga). Os repasses são as transferências constitucionais da União ao governo do estado e às prefeituras; a parte do FUNDEB formada por impostos
+              do próprio estado (ICMS, IPVA, ITCMD) e a linha &quot;DEDU&quot;, cuja origem o arquivo não identifica, ficam fora. Alguns arquivos do Tesouro vêm
+              em centavos e são convertidos para reais; meses que o Tesouro não publicou aparecem como ano incompleto.
             </li>
             <li>
               <strong>Resumo automático.</strong> Quando houver resumo de projeto gerado por inteligência artificial, ele aparece marcado como &quot;Resumo
