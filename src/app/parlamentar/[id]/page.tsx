@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
@@ -25,11 +25,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 const nomeUF = new Map(ESTADOS.map((e) => [e.uf, e.nome]));
 
+// A mesma pessoa pode ter ficha na Câmara e no Senado (ligadas por nome civil e data de nascimento).
+// A página mostra as duas juntas; quem abre a ficha antiga é levado para a do mandato atual.
+async function pessoa(id: string) {
+  const p = await buscarParlamentar(id);
+  if (!p) return null;
+  const outra = p.outra_casa_id ? await buscarParlamentar(p.outra_casa_id) : null;
+  return { p, outra, ids: [p.id, outra?.id].filter(Boolean).sort() as string[] };
+}
+
+const anos = (ini: string, fim: string | null) => `${ini.slice(0, 4)}–${fim ? fim.slice(0, 4) : "hoje"}`;
+
 async function Cabecalho({ params }: { params: Props["params"] }) {
   const { id } = await params;
-  const p = await buscarParlamentar(id);
-  if (!p) notFound();
-  const [resumo, mand, presidiu] = await Promise.all([resumoVotos(id), mandatos(id), presidenciasDoParlamentar(id)]);
+  const pe = await pessoa(id);
+  if (!pe) notFound();
+  const { p, outra, ids } = pe;
+  if (outra && outra.ativo && !p.ativo) redirect(`/parlamentar/${outra.id}`);
+  const [resumo, mand, presidiu] = await Promise.all([resumoVotos(ids), mandatos(ids), presidenciasDoParlamentar(ids)]);
+  const porCasa = (["camara", "senado"] as const)
+    .map((c) => ({ casa: c, lista: mand.filter((m) => m.casa === c) }))
+    .filter((x) => x.lista.length)
+    .sort((a, b) => (a.casa === p.casa ? -1 : b.casa === p.casa ? 1 : 0));
+  const fichas = [p, outra].filter(Boolean) as NonNullable<typeof outra>[];
 
   return (
     <>
@@ -47,15 +65,24 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
             {p.partido_atual ? ` · ${p.partido_atual}` : ""}
             {!p.ativo ? " · fora de exercício" : ""}
           </p>
-          {p.nome_civil !== p.nome_parlamentar && <p className={styles.civil}>Nome civil: {p.nome_civil}</p>}
-          {presidiu.length > 0 && (
+          {outra && (
             <p className={styles.civil}>
-              <Link href={`/presidencias?cargo=${p.casa}`}>
-                {presidiu.some((x) => !x.ano_fim) ? "Preside" : "Presidiu"} {p.casa === "camara" ? "a Câmara" : "o Senado"}
-              </Link>
-              : {presidiu.map((x) => (x.ano_fim ? (x.ano_inicio === x.ano_fim ? `${x.ano_inicio}` : `${x.ano_inicio}–${x.ano_fim}`) : `desde ${x.ano_inicio}`)).join(", ")}
+              Também foi {outra.casa === "camara" ? "deputado(a) federal" : "senador(a)"}: a carreira nas duas Casas aparece junta nesta página.
             </p>
           )}
+          {p.nome_civil !== p.nome_parlamentar && <p className={styles.civil}>Nome civil: {p.nome_civil}</p>}
+          {(["camara", "senado"] as const).map((c) => {
+            const xs = presidiu.filter((x) => x.cargo === c);
+            if (!xs.length) return null;
+            return (
+              <p key={c} className={styles.civil}>
+                <Link href={`/presidencias?cargo=${c}`}>
+                  {xs.some((x) => !x.ano_fim) ? "Preside" : "Presidiu"} {c === "camara" ? "a Câmara" : "o Senado"}
+                </Link>
+                : {xs.map((x) => (x.ano_fim ? (x.ano_inicio === x.ano_fim ? `${x.ano_inicio}` : `${x.ano_inicio}–${x.ano_fim}`) : `desde ${x.ano_inicio}`)).join(", ")}
+              </p>
+            );
+          })}
         </div>
       </div>
 
@@ -81,16 +108,29 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
           <dd>{numero(resumo.proposicoes)}</dd>
         </div>
       </dl>
+      {porCasa.map(({ casa, lista }) => (
+        <p key={casa} className={ui.fonte}>
+          {lista.length > 1 ? `${lista.length} mandatos ${CASA[casa].na}` : `Mandato ${CASA[casa].na}`}:{" "}
+          {lista.map((m) => `${anos(m.inicio, m.fim)} (${[m.partido, m.uf].filter(Boolean).join("-")})`).join(", ")}
+        </p>
+      ))}
       <p className={ui.fonte}>
-        {mand.length > 1 ? `${mand.length} mandatos ${CASA[p.casa].na}` : `Mandato ${CASA[p.casa].na}`}:{" "}
-        {mand
-          .map((m) => `${m.inicio.slice(0, 4)}–${m.fim ? m.fim.slice(0, 4) : "hoje"} (${[m.partido, m.uf].filter(Boolean).join("-")})`)
-          .join(", ")}{" "}
-        · <a href={p.fonte_url}>fonte oficial</a>
+        {fichas.map((f, i) => (
+          <span key={f.id}>
+            {i > 0 && " · "}
+            <a href={f.fonte_url}>ficha oficial {f.casa === "camara" ? "na Câmara" : "no Senado"}</a>
+          </span>
+        ))}
+        {outra && " · as duas fichas foram ligadas porque nome civil e data de nascimento são iguais nas duas fontes oficiais"}
       </p>
       <p className={ui.fonte}>
-        Votos individuais publicados pela fonte oficial desde {p.casa === "camara" ? "2001" : "1991"}. Partido dos mandatos antigos ainda
-        em conferência.
+        Votos individuais publicados pela fonte oficial desde{" "}
+        {fichas
+          .map((f) => f.casa)
+          .sort()
+          .map((c) => (c === "camara" ? "2001 na Câmara" : "1991 no Senado"))
+          .join(" e ")}
+        . Partido dos mandatos antigos ainda em conferência.
       </p>
     </>
   );
@@ -143,9 +183,14 @@ async function Conteudo({ params, searchParams }: Props) {
   const sp = await searchParams;
   const aba = sp.aba === "proposicoes" ? "proposicoes" : "votacoes";
   const pagina = Math.max(1, Number(sp.pagina) || 1);
+  const pe = await pessoa(id);
+  if (!pe) notFound();
+  const { ids } = pe;
+  const duasCasas = ids.length > 1;
+  const casaDe = (c: "camara" | "senado") => (duasCasas ? <span className={ui.selo}>{c === "camara" ? "Câmara" : "Senado"}</span> : null);
 
   if (aba === "proposicoes") {
-    const { linhas, total } = await proposicoesDoParlamentar(id, pagina);
+    const { linhas, total } = await proposicoesDoParlamentar(ids, pagina);
     return (
       <>
         <Abas id={id} aba={aba} />
@@ -159,7 +204,10 @@ async function Conteudo({ params, searchParams }: Props) {
                   <p className={styles.titulo}>
                     <a href={l.fonte_url}>{siglaProposicao(l.tipo, l.numero, l.ano)}</a>
                   </p>
-                  <span className={ui.selo}>{l.papel === "autor" ? "Autor" : "Coautor"}</span>
+                  <span className={styles.selos}>
+                    {casaDe(l.casa)}
+                    <span className={ui.selo}>{l.papel === "autor" ? "Autor" : "Coautor"}</span>
+                  </span>
                 </div>
                 <p className={styles.meta}>
                   Apresentada em {data(l.apresentada_em)}
@@ -182,16 +230,20 @@ async function Conteudo({ params, searchParams }: Props) {
         <Paginacao id={id} aba={aba} pagina={pagina} total={total} />
         <p className={ui.fonte}>
           {numero(total)} proposições ·{" "}
-          {id.startsWith("S-")
-            ? "PL, PLS, PLP, PEC, PDL, PDS, PRS e PRN · fonte: dados abertos do Senado (projetos vindos da Câmara não entram)"
-            : "PL, PLP, PEC, PDL, PDC, PRC, MPV e PLV · fonte: dados abertos da Câmara"}
-          .
+          {ids
+            .map((i) =>
+              i.startsWith("S-")
+                ? "Senado: PL, PLS, PLP, PEC, PDL, PDS, PRS e PRN (projetos vindos da Câmara não entram)"
+                : "Câmara: PL, PLP, PEC, PDL, PDC, PRC, MPV e PLV",
+            )
+            .join(" · ")}{" "}
+          · fonte: dados abertos {duasCasas ? "da Câmara e do Senado" : ids[0].startsWith("S-") ? "do Senado" : "da Câmara"}.
         </p>
       </>
     );
   }
 
-  const { linhas, total } = await votosDoParlamentar(id, pagina);
+  const { linhas, total } = await votosDoParlamentar(ids, pagina);
   return (
     <>
       <Abas id={id} aba={aba} />
@@ -209,8 +261,11 @@ async function Conteudo({ params, searchParams }: Props) {
                       {l.proposicao_tipo ? siglaProposicao(l.proposicao_tipo, l.proposicao_numero, l.proposicao_ano) : "Votação nominal"}
                     </Link>
                   </p>
-                  <span className={ui.etiqueta} style={{ background: cor.fundo, color: cor.texto }}>
-                    {rotuloVoto(l.voto, l.voto_original)}
+                  <span className={styles.selos}>
+                    {casaDe(l.casa)}
+                    <span className={ui.etiqueta} style={{ background: cor.fundo, color: cor.texto }}>
+                      {rotuloVoto(l.voto, l.voto_original)}
+                    </span>
                   </span>
                 </div>
                 <p className={styles.meta}>

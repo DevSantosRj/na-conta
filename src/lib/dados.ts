@@ -17,13 +17,14 @@ export type Parlamentar = {
   foto_url: string | null;
   ativo: boolean;
   fonte_url: string;
+  outra_casa_id: string | null;
 };
 
 export async function listarParlamentares() {
   "use cache";
   cacheLife("hours");
   cacheTag("parlamentares");
-  const todos: Omit<Parlamentar, "nome_civil" | "fonte_url">[] = [];
+  const todos: Omit<Parlamentar, "nome_civil" | "fonte_url" | "outra_casa_id">[] = [];
   for (let de = 0; ; de += 1000) {
     const { data, error } = await db
       .from("parlamentares")
@@ -45,34 +46,40 @@ export async function buscarParlamentar(id: string) {
   return data as Parlamentar | null;
 }
 
-export async function mandatos(id: string) {
+// As funções abaixo recebem os ids da mesma pessoa nas duas Casas (ficha da Câmara e do Senado ligadas)
+export async function mandatos(ids: string[]) {
   "use cache";
   cacheLife("days");
-  const { data, error } = await db.from("mandatos").select("legislatura, uf, partido, inicio, fim").eq("parlamentar_id", id).order("legislatura", { ascending: false });
+  const { data, error } = await db
+    .from("mandatos")
+    .select("casa, legislatura, uf, partido, inicio, fim")
+    .in("parlamentar_id", ids)
+    .order("legislatura", { ascending: false });
   if (error) throw new Error(error.message);
   return data;
 }
 
 // Quantos votos de cada tipo o parlamentar tem registrados
-export async function resumoVotos(id: string) {
+export async function resumoVotos(ids: string[]) {
   "use cache";
   cacheLife("hours");
-  cacheTag(`parlamentar-${id}`);
+  ids.forEach((id) => cacheTag(`parlamentar-${id}`));
   const tipos: Voto[] = ["sim", "nao", "abstencao", "obstrucao", "ausente", "outro"];
   const contagens = await Promise.all(
     tipos.map(async (voto) => {
-      const { count, error } = await db.from("votos").select("votacao_id", { count: "exact", head: true }).eq("parlamentar_id", id).eq("voto", voto);
+      const { count, error } = await db.from("votos").select("votacao_id", { count: "exact", head: true }).in("parlamentar_id", ids).eq("voto", voto);
       if (error) throw new Error(error.message);
       return [voto, count ?? 0] as const;
     }),
   );
   const porTipo = Object.fromEntries(contagens) as Record<Voto, number>;
   const total = contagens.reduce((s, [, n]) => s + n, 0);
-  const { count: proposicoes } = await db.from("autorias").select("proposicao_id", { count: "exact", head: true }).eq("parlamentar_id", id).eq("papel", "autor");
+  const { count: proposicoes } = await db.from("autorias").select("proposicao_id", { count: "exact", head: true }).in("parlamentar_id", ids).eq("papel", "autor");
   return { porTipo, total, proposicoes: proposicoes ?? 0 };
 }
 
 export type LinhaVoto = {
+  casa: "camara" | "senado";
   voto: Voto;
   voto_original: string | null;
   votacao_id: string;
@@ -90,15 +97,15 @@ export type LinhaVoto = {
   proposicao_resumo: string | null;
 };
 
-export async function votosDoParlamentar(id: string, pagina: number) {
+export async function votosDoParlamentar(ids: string[], pagina: number) {
   "use cache";
   cacheLife("hours");
-  cacheTag(`parlamentar-${id}`);
+  ids.forEach((id) => cacheTag(`parlamentar-${id}`));
   const de = (pagina - 1) * POR_PAGINA;
   const { data, count, error } = await db
     .from("votos_detalhados")
     .select("*", { count: "exact" })
-    .eq("parlamentar_id", id)
+    .in("parlamentar_id", ids)
     .order("data", { ascending: false })
     .order("votacao_id", { ascending: false })
     .range(de, de + POR_PAGINA - 1);
@@ -109,6 +116,7 @@ export async function votosDoParlamentar(id: string, pagina: number) {
 }
 
 export type LinhaProposicao = {
+  casa: "camara" | "senado";
   papel: "autor" | "coautor";
   proposicao_id: string;
   tipo: string;
@@ -121,15 +129,15 @@ export type LinhaProposicao = {
   fonte_url: string;
 };
 
-export async function proposicoesDoParlamentar(id: string, pagina: number) {
+export async function proposicoesDoParlamentar(ids: string[], pagina: number) {
   "use cache";
   cacheLife("hours");
-  cacheTag(`parlamentar-${id}`);
+  ids.forEach((id) => cacheTag(`parlamentar-${id}`));
   const de = (pagina - 1) * POR_PAGINA;
   const { data, count, error } = await db
     .from("autorias_detalhadas")
     .select("*", { count: "exact" })
-    .eq("parlamentar_id", id)
+    .in("parlamentar_id", ids)
     .order("apresentada_em", { ascending: false })
     .order("proposicao_id", { ascending: false })
     .range(de, de + POR_PAGINA - 1);
@@ -187,11 +195,11 @@ export async function presidencias() {
   return data as Presidencia[];
 }
 
-export async function presidenciasDoParlamentar(id: string) {
+export async function presidenciasDoParlamentar(ids: string[]) {
   "use cache";
   cacheLife("days");
   cacheTag("presidencias");
-  const { data, error } = await db.from("presidencias").select("cargo, ano_inicio, ano_fim, inicio, fim").eq("parlamentar_id", id).order("ordem");
+  const { data, error } = await db.from("presidencias").select("cargo, ano_inicio, ano_fim, inicio, fim").in("parlamentar_id", ids).order("ordem");
   if (error) throw new Error(error.message);
   return data as Pick<Presidencia, "cargo" | "ano_inicio" | "ano_fim" | "inicio" | "fim">[];
 }

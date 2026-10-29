@@ -19,7 +19,7 @@ export default async function Imagem({ params }: { params: Promise<{ id: string 
     fonte("ibm-plex-sans-latin-400-normal.woff"),
     fonte("ibm-plex-mono-latin-400-normal.woff"),
   ]);
-  const r = p ? await resumoVotos(id) : null;
+  const r = p ? await resumoVotos([p.id, p.outra_casa_id].filter(Boolean).sort() as string[]) : null;
   const nome = p?.nome_parlamentar ?? "Parlamentar";
   const linha = p ? `${CASA[p.casa].cargo} · ${p.uf}${p.partido_atual ? ` · ${p.partido_atual}` : ""}` : "";
 

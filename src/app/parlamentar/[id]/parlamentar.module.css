@@ -140,3 +140,10 @@
   margin: 4px 0 0;
   font-size: 15px;
 }
+
+.selos {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+}
