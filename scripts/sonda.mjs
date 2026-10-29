@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars -- sonda: funções de apoio usadas em rodadas diferentes */
-// Sonda das fontes oficiais (8ª rodada): fontes do pacto federativo.
+// Sonda das fontes oficiais (9ª rodada): formato das transferências constitucionais.
 // Rodadas anteriores: histórico do git e docs/fontes.md.
 
 const UA = { "User-Agent": "na-conta-sonda (+https://github.com/DevSantosRj/na-conta)" };
@@ -81,33 +81,25 @@ async function arquivo(nome, url) {
   }
 }
 
-// 8ª rodada: fontes do pacto federativo (arrecadação federal por estado e transferências constitucionais)
+// 9ª rodada: formato dos arquivos mensais de transferências constitucionais (estados e municípios)
 {
   const CK = "https://www.tesourotransparente.gov.br/ckan/api/3/action";
-  for (const id of ["8add38c3-cf27-4428-940e-806548cac95c", "af4e7c47-2132-4d9a-bd7c-34e28a210b03"]) {
-    try {
-      const r = await fetch(`${CK}/package_show?id=${id}`, { headers: UA });
-      const d = await r.json();
-      console.log(`\n===== CKAN ${id}: ${d.result?.title}`);
-      for (const x of d.result?.resources ?? []) console.log(`RES ${x.format} | ${x.name} | ${x.url} | ${x.last_modified ?? x.created}`);
-    } catch (e) { console.log(`CKAN ${id} falhou`, e.message); }
-  }
-  try {
-    const r = await fetch(`${CK}/package_search?q=arrecadacao&rows=30`, { headers: UA });
-    const d = await r.json();
-    for (const p of d.result?.results ?? []) console.log(`PKG ${p.name} | ${p.title}`);
-  } catch (e) { console.log("busca ckan falhou", e.message); }
-  await pagina("https://www.gov.br/receitafederal/dados", { links: /arrecad|\.csv|\.xlsx|\.zip/i, max: 500 });
-  await pagina("https://www.gov.br/receitafederal/pt-br/centrais-de-conteudo/publicacoes/relatorios/arrecadacao-federal", { links: /arrecad|uf|estado|\.csv|\.xlsx/i, max: 500 });
-  for (const u of [
-    "https://www.gov.br/receitafederal/dados/arrecadacao-estado.csv",
-    "https://www.gov.br/receitafederal/dados/arrecadacao-uf.csv",
-    "https://dados.gov.br/dados/conjuntos-dados/resultado-da-arrecadacao-federal",
-  ]) {
-    try {
-      const r = await fetch(u, { headers: UA, redirect: "follow" });
-      const t = await r.text();
-      console.log(`\n===== ${u}\nstatus ${r.status} · ${t.length} bytes · ${r.headers.get("content-type")} · final ${r.url}\n${t.slice(0, 1500)}`);
-    } catch (e) { console.log(`${u} falhou`, e.message); }
+  for (const [id, alvo] of [["8add38c3-cf27-4428-940e-806548cac95c", "Transferencia_Mensal_Estados_202609"], ["af4e7c47-2132-4d9a-bd7c-34e28a210b03", "Transferencia_Mensal_Municipios_202609"], ["af4e7c47-2132-4d9a-bd7c-34e28a210b03", "Transferencia_Mensal_Municipios_202512"]]) {
+    const d = await (await fetch(`${CK}/package_show?id=${id}`, { headers: UA })).json();
+    const nomes = (d.result?.resources ?? []).map((x) => x.name);
+    console.log(`\n${id}: ${nomes.length} recursos; municipais recentes: ${nomes.filter((n) => /202[3-6]/.test(n)).join(", ").slice(0, 1500)}`);
+    const r = (d.result?.resources ?? []).find((x) => x.name.startsWith(alvo));
+    if (!r) { console.log(`sem ${alvo}`); continue; }
+    const resp = await fetch(r.url, { headers: UA });
+    const b = Buffer.from(await resp.arrayBuffer());
+    const t = new TextDecoder("latin1").decode(b);
+    const linhas = t.split(/\r?\n/);
+    console.log(`\n===== ${alvo} · ${r.url} · ${b.length} bytes · ${linhas.length} linhas`);
+    for (const l of linhas.slice(0, 8)) console.log(`  ${l.slice(0, 600)}`);
+    const cols = linhas[0].split(";");
+    for (let c = 0; c < cols.length; c++) {
+      const vals = new Set(linhas.slice(1, 6000).map((l) => l.split(";")[c]));
+      if (vals.size < 40) console.log(`  COL ${cols[c]}: ${[...vals].slice(0, 40).join(" | ")}`);
+    }
   }
 }
