@@ -102,6 +102,9 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
         <Suspense fallback={<span className={`${ui.esqueleto} ${styles.seguirEsqueleto}`} />}>
           <Seguir id={p.id} nome={p.nome_parlamentar} />
         </Suspense>
+        <Link href={`/comparar?a=${p.id}`} className={ui.botaoSecundario}>
+          Comparar com outro
+        </Link>
       </div>
 
       <dl className={styles.numeros}>

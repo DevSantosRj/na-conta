@@ -351,3 +351,51 @@ export async function emendasDoEstado(uf: string) {
     porMunicipio: porMunicipio.data.map((l) => ({ municipio_id: l.municipio_id as number, emendas: n(l.emendas), empenhado: n(l.empenhado), pago: n(l.pago) })),
   };
 }
+
+export async function concordancia(a: string[], b: string[]) {
+  "use cache";
+  cacheLife("hours");
+  const { data, error } = await db.rpc("concordancia", { a, b });
+  if (error) throw new Error(error.message);
+  const l = (data as { comuns: number; iguais: number }[])[0] ?? { comuns: 0, iguais: 0 };
+  return { comuns: Number(l.comuns), iguais: Number(l.iguais) };
+}
+
+export async function todosMunicipios() {
+  "use cache";
+  cacheLife("days");
+  const lista: Pick<Municipio, "ibge_id" | "nome" | "uf">[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await db.from("municipios").select("ibge_id, nome, uf").order("ibge_id").range(de, de + 999);
+    if (error) throw new Error(error.message);
+    lista.push(...data);
+    if (data.length < 1000) return lista;
+  }
+}
+
+export type ProposicaoAchada = { id: string; casa: string; tipo: string; numero: number; ano: number; ementa: string; fonte_url: string };
+
+// Busca de proposições: "PL 1234/2023" vai direto; texto livre procura na ementa (as mais recentes primeiro)
+export async function buscarProposicoes(q: string) {
+  "use cache";
+  cacheLife("hours");
+  const sigla = /^\s*([A-Za-z]{2,4})\s*(\d+)\s*\/\s*(\d{4})\s*$/.exec(q);
+  let consulta = db.from("proposicoes").select("id, casa, tipo, numero, ano, ementa, fonte_url");
+  if (sigla) consulta = consulta.eq("tipo", sigla[1].toUpperCase()).eq("numero", Number(sigla[2])).eq("ano", Number(sigla[3]));
+  else consulta = consulta.ilike("ementa", `%${q.replace(/[%_]/g, " ")}%`);
+  const { data, error } = await consulta.order("apresentada_em", { ascending: false }).limit(20);
+  if (error) throw new Error(error.message);
+  return data as ProposicaoAchada[];
+}
+
+export type Artigo = { id: string; titulo: string; texto_oficial: string; texto_simples: string | null; por_que_importa: string | null; revisado_por: string | null; revisado_em: string | null };
+
+// Só artigos revisados e publicados (a regra RLS e a restrição do banco garantem isso)
+export async function artigosPublicados() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("artigos");
+  const { data, error } = await db.from("artigos").select("id, titulo, texto_oficial, texto_simples, por_que_importa, revisado_por, revisado_em").order("id");
+  if (error) throw new Error(error.message);
+  return data as Artigo[];
+}

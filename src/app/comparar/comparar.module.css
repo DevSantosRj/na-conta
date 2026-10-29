@@ -1,0 +1,84 @@
+.form {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 16px;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+}
+
+@media (min-width: 768px) {
+  .form {
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+  }
+}
+
+.form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.form select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--cor-borda-forte);
+  border-radius: var(--raio);
+  background: #ffffff;
+  font: inherit;
+  font-weight: 400;
+  max-width: 100%;
+}
+
+.destaque {
+  margin-top: 16px;
+  font-size: 17px;
+}
+
+.destaque p {
+  margin: 0;
+}
+
+.tabelaRolagem {
+  margin-top: 12px;
+  overflow-x: auto;
+}
+
+.tabela {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--cor-cartao);
+  border: 1px solid var(--cor-borda);
+  border-radius: 14px;
+  font-size: 14px;
+}
+
+.tabela th,
+.tabela td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cor-borda);
+  text-align: left;
+  vertical-align: top;
+}
+
+.tabela thead th {
+  font-family: var(--fonte-titulo);
+  font-size: 16px;
+}
+
+.tabela tbody th {
+  font-weight: 600;
+  color: var(--cor-texto-2);
+  width: 34%;
+}
+
+.tabela td {
+  font-family: var(--fonte-mono);
+  font-size: 13px;
+}

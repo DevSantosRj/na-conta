@@ -110,14 +110,6 @@ export default function Inicio() {
           </ul>
         </section>
       </main>
-
-      <footer className={styles.rodape}>
-        <div className={styles.conteudo}>
-          <span>Na Conta · um projeto de DevSantos</span>
-          <a href="https://x.com/DEVSANTOSRJ">Contato: @DEVSANTOSRJ no X</a>
-          <a href="https://github.com/DevSantosRj/na-conta">Código aberto no GitHub</a>
-        </div>
-      </footer>
     </>
   );
 }

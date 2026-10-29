@@ -33,6 +33,14 @@
 
 .acoes {
   margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.acoes > a:last-child {
+  text-align: center;
+  justify-content: center;
 }
 
 .seguir {

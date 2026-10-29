@@ -1,0 +1,36 @@
+.rodape {
+  margin-top: 48px;
+  background: var(--cor-cartao);
+  border-top: 1px solid var(--cor-borda);
+}
+
+.conteudo {
+  max-width: var(--largura-max);
+  margin: 0 auto;
+  padding: 24px var(--margem);
+  font-size: 14px;
+  color: var(--cor-texto-3);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  margin-bottom: 10px;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--cor-texto-2);
+  font-weight: 600;
+}
+
+.conteudo p {
+  margin: 0;
+}
+
+.conteudo p a {
+  color: var(--cor-texto-3);
+}

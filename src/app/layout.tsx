@@ -8,6 +8,7 @@ import "@fontsource/ibm-plex-sans/600.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-serif/400.css";
 import "./globals.css";
+import { Rodape } from "@/components/Rodape";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
@@ -29,7 +30,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Rodape />
+      </body>
     </html>
   );
 }

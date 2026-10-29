@@ -24,6 +24,7 @@ export function Topo() {
           <Link href="/parlamentares">Parlamentares</Link>
           <Link href="/presidencias">Presidências</Link>
           <Link href="/meu-imposto">Meu imposto</Link>
+          <Link href="/busca">Busca</Link>
           <Link href="/alertas">Meus alertas</Link>
         </nav>
       </div>

@@ -91,3 +91,23 @@
   font-size: 13px;
   color: var(--cor-texto-3);
 }
+
+.secaoBusca {
+  margin-top: 28px;
+}
+
+.secaoBusca > ul {
+  margin-top: 12px;
+}
+
+.listaSimples {
+  list-style: none;
+  padding: 0;
+  columns: 2 180px;
+  column-gap: 16px;
+}
+
+.listaSimples li {
+  padding: 4px 0;
+  break-inside: avoid;
+}
