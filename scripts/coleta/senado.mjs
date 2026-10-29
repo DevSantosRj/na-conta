@@ -297,7 +297,9 @@ export async function partidos() {
           .sort((a, b) => a.de.localeCompare(b.de));
         for (const m of mands) {
           const seq = [];
-          for (const f of fil) if (f.de <= m.fim && f.ate >= m.inicio && seq.at(-1) !== f.sigla) seq.push(f.sigla);
+          const fim = m.fim ?? "9999-12-31";
+          const inicio = m.inicio ?? "0000-01-01";
+          for (const f of fil) if (f.de <= fim && f.ate >= inicio && seq.at(-1) !== f.sigla) seq.push(f.sigla);
           if (!seq.length) continue;
           const { error: e } = await db.from("mandatos").update({ partido: seq.join(" → ") }).eq("parlamentar_id", pid).eq("legislatura", m.legislatura);
           if (e) throw new Error(`mandatos: ${e.message}`);

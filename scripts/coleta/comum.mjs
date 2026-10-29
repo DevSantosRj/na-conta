@@ -95,7 +95,7 @@ export async function idsExistentes(tabela, filtroCasa, coluna = "id") {
 
 // Lê um CSV oficial que vem dentro de um .zip ou em outra codificação (latin1), linha a linha, só com as colunas pedidas.
 // O arquivo é baixado para uma pasta temporária e apagado no fim.
-export async function* lerCsvArquivo(endereco, colunas, { zip = false, noZip = null, latin1 = false, pularLinhas = 0 } = {}) {
+export async function* lerCsvArquivo(endereco, colunas, { zip = false, noZip = null, latin1 = false, pularLinhas = 0, todasAsColunas = false } = {}) {
   const { mkdtempSync, writeFileSync, rmSync, createReadStream } = await import("node:fs");
   const { tmpdir } = await import("node:os");
   const { join } = await import("node:path");
@@ -132,6 +132,11 @@ export async function* lerCsvArquivo(endereco, colunas, { zip = false, noZip = n
       if (lidas === 1) {
         const faltando = colunas.filter((c) => !(c in linha));
         if (faltando.length) throw new Error(`${endereco}: colunas ausentes: ${faltando.join(", ")} · presentes: ${Object.keys(linha).slice(0, 12).join(", ")}`);
+      }
+      // todasAsColunas: só para arquivos sem dado pessoal (ex.: arrecadação por estado)
+      if (todasAsColunas) {
+        yield linha;
+        continue;
       }
       const so = {};
       for (const c of colunas) so[c] = linha[c] ?? "";

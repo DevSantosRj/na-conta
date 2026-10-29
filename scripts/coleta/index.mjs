@@ -9,6 +9,7 @@
 //   FONTES=ibge                                   → população de estados e municípios (IBGE/SIDRA)
 //   FONTES=presidencias                           → listas oficiais de presidentes (scripts/dados)
 //   FONTES=cruzada                                → liga a ficha da Câmara e a do Senado da mesma pessoa
+//   FONTES=federativo                             → pacto federativo: arrecadação por estado e transferências constitucionais
 //   FONTES=partidos                               → partido em cada mandato anterior (histórico oficial)
 //   FONTES=carreira                               → mandatos anteriores de quem está no mandato hoje
 // Anos antes de 2023 são histórico: só entram votos e proposições de quem está no mandato hoje.
@@ -19,6 +20,7 @@ import { conferirCamara } from "./conferir.mjs";
 import * as emendas from "./emendas.mjs";
 import * as gastos from "./gastos.mjs";
 import * as ibge from "./ibge.mjs";
+import * as federativo from "./federativo.mjs";
 import * as presidencias from "./presidencias.mjs";
 import * as senado from "./senado.mjs";
 
@@ -67,6 +69,12 @@ if (fontes.includes("ibge")) await etapa("ibge:populacao", ibge.populacao);
 // Emendas (Portal da Transparência): arquivo único com todos os anos; na rodada diária, só às segundas
 if (fontes.includes("emendas") || (!process.env.FONTES && new Date().getUTCDay() === 1)) await etapa("emendas", emendas.carregar);
 // Cota parlamentar: soma por mês e categoria (Câmara e Senado)
+// Pacto federativo: toda segunda-feira na rodada normal, ou quando pedido
+if (fontes.includes("federativo") || (!process.env.FONTES && new Date().getUTCDay() === 1)) {
+  await etapa("federativo:arrecadacao", federativo.arrecadacao);
+  await etapa("federativo:transferencias", () => federativo.transferencias());
+}
+
 if (fontes.includes("gastos")) {
   for (const ano of anos) await etapa(`gastos:camara:${ano}`, () => gastos.camara(ano));
   for (const ano of anos) await etapa(`gastos:senado:${ano}`, () => gastos.senado(ano));
