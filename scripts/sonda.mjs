@@ -81,11 +81,7 @@ async function arquivo(nome, url) {
   }
 }
 
-// Cota parlamentar (CEAP) da Câmara — arquivo anual
-await arquivo("ceap-camara-2025", "https://www.camara.leg.br/cotas/Ano-2025.csv.zip");
-// Cota do Senado (CEAPS) — arquivo anual
-await arquivo("ceaps-senado-2025", "https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_2025.csv");
-// Emendas parlamentares — download em lote do Portal da Transparência (sem token)
-await arquivo("emendas-portal", "https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares/UNICO");
-// População por estado (IBGE, estimativa mais recente)
+// População por estado (IBGE): duas portas oficiais
+await json("https://apisidra.ibge.gov.br/values/t/6579/n3/all/v/9324/p/last");
 await json("https://servicodados.ibge.gov.br/api/v3/agregados/6579/periodos/-1/variaveis/9324?localidades=N3[all]");
+await json("https://servicodados.ibge.gov.br/api/v1/localidades/estados");
