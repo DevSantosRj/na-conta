@@ -380,10 +380,13 @@ export async function buscarProposicoes(q: string) {
   "use cache";
   cacheLife("hours");
   const sigla = /^\s*([A-Za-z]{2,4})\s*(\d+)\s*\/\s*(\d{4})\s*$/.exec(q);
-  let consulta = db.from("proposicoes").select("id, casa, tipo, numero, ano, ementa, fonte_url");
-  if (sigla) consulta = consulta.eq("tipo", sigla[1].toUpperCase()).eq("numero", Number(sigla[2])).eq("ano", Number(sigla[3]));
-  else consulta = consulta.ilike("ementa", `%${q.replace(/[%_]/g, " ")}%`);
-  const { data, error } = await consulta.order("apresentada_em", { ascending: false }).limit(20);
+  const colunas = "id, casa, tipo, numero, ano, ementa, fonte_url";
+  // Palavras: sem acento, minúsculas, só letras/números (a função do banco usa o índice de trigramas)
+  const termo = q.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  if (!sigla && termo.length < 3) return [];
+  const { data, error } = sigla
+    ? await db.from("proposicoes").select(colunas).eq("tipo", sigla[1].toUpperCase()).eq("numero", Number(sigla[2])).eq("ano", Number(sigla[3])).order("apresentada_em", { ascending: false }).limit(20)
+    : await db.rpc("buscar_proposicoes", { termo, limite: 20 }).select(colunas);
   if (error) throw new Error(error.message);
   return data as ProposicaoAchada[];
 }
