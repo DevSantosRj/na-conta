@@ -23,6 +23,7 @@ export function Topo() {
         <nav aria-label="Principal" className={styles.nav}>
           <Link href="/parlamentares">Parlamentares</Link>
           <Link href="/presidencias">Presidências</Link>
+          <Link href="/meu-imposto">Meu imposto</Link>
           <Link href="/alertas">Meus alertas</Link>
         </nav>
       </div>

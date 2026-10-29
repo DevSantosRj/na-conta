@@ -16,6 +16,7 @@ const MODULOS = [
   { titulo: "Presidências", texto: "Quem preside a República, a Câmara e o Senado hoje, todos os anteriores e como funciona o presidencialismo." },
   { titulo: "Proposições", texto: "Tudo o que cada parlamentar propôs, com resumo automático ao lado da ementa oficial." },
   { titulo: "Gastos e emendas", texto: "Cota parlamentar e emendas: quanto foi indicado, para qual cidade, quanto foi pago." },
+  { titulo: "Meu imposto", texto: "Quanto sai do seu salário para o INSS e para o imposto de renda, passo a passo, com as tabelas oficiais." },
   { titulo: "Pacto federativo", texto: "O que cada estado arrecada e o que recebe da União, com a regra da Constituição ao lado." },
 ];
 
