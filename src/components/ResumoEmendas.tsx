@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LinhaEmenda } from "@/lib/dados";
-import { categoriaLegivel, numero, reais } from "@/lib/formato";
+import { categoriaLegivel, nomeProprio, numero, reais } from "@/lib/formato";
 import ui from "./ui.module.css";
 import styles from "./ResumoEmendas.module.css";
 
@@ -65,7 +65,7 @@ export function ResumoEmendas({
         )
       : agrupar(linhas, (l) => ({
           chave: l.autor ?? "Sem autor informado",
-          rotulo: l.autor ? categoriaLegivel(l.autor) : "Sem autor informado",
+          rotulo: l.autor ? nomeProprio(l.autor) : "Sem autor informado",
           href: l.parlamentar_id ? `/parlamentar/${l.parlamentar_id}?aba=emendas` : undefined,
         }));
 

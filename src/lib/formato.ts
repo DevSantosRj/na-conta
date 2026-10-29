@@ -54,3 +54,14 @@ export function categoriaLegivel(c: string) {
   const m = t.toLocaleLowerCase("pt-BR");
   return m.charAt(0).toLocaleUpperCase("pt-BR") + m.slice(1);
 }
+
+// "LUIZ LIMA" → "Luiz Lima"; "BANCADA DE TOCANTINS" → "Bancada de Tocantins"
+export function nomeProprio(s: string) {
+  if (s !== s.toUpperCase()) return s;
+  const pequenas = new Set(["da", "de", "do", "das", "dos", "e"]);
+  return s
+    .toLocaleLowerCase("pt-BR")
+    .split(/\s+/)
+    .map((p, i) => (i > 0 && pequenas.has(p) ? p : p.charAt(0).toLocaleUpperCase("pt-BR") + p.slice(1)))
+    .join(" ");
+}
