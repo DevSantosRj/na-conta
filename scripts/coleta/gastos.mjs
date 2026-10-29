@@ -23,7 +23,11 @@ async function regravar(prefixo, ano, somas) {
   return gravar("gastos_mensais", [...somas.values()], (l) => `${l.parlamentar_id}|${l.ano}|${l.mes}|${l.categoria}`, "parlamentar_id,ano,mes,categoria");
 }
 
-function somar(somas, pid, ano, mes, categoria, valor, fonte) {
+// Anos até 2022: total do ano (mes = 0); da legislatura atual em diante: mês a mês
+const ANUAL_ATE = 2022;
+
+function somar(somas, pid, ano, mesReal, categoria, valor, fonte) {
+  const mes = ano <= ANUAL_ATE ? 0 : mesReal;
   const k = `${pid}|${ano}|${mes}|${categoria}`;
   const s = somas.get(k) ?? { parlamentar_id: pid, ano, mes, categoria, valor: 0, documentos: 0, fonte_url: fonte };
   s.valor = Math.round((s.valor + valor) * 100) / 100;
