@@ -54,15 +54,19 @@ async function json(url) {
 
 const S = "https://legis.senado.leg.br/dadosabertos";
 
-// Formato do campo "autoria" nos projetos de um senador (Davi Alcolumbre = 3830)
-const r = await fetch(`${S}/processo?codigoParlamentarAutor=3830`, { headers: { ...UA, Accept: "application/json" } });
-const lista = await r.json();
-const projetos = lista.filter((p) => /^Proj|^Proposta/.test(p.tipoDocumento ?? ""));
-console.log("total", lista.length, "projetos", projetos.length);
-for (const p of projetos.filter((p) => /^PLC/.test(p.identificacao)).slice(0, 5)) console.log("PLC |", p.identificacao, "|", p.autoria);
-const vistos = new Map();
-for (const p of projetos) {
-  const chave = (p.autoria ?? "").slice(0, 60);
-  if (!vistos.has(chave)) vistos.set(chave, p.identificacao);
+// Ligação de carreiras: nomes das colunas do deputados.csv (só o cabeçalho, nenhum valor) e ficha do senador
+{
+  const r = await fetch("https://dadosabertos.camara.leg.br/arquivos/deputados/csv/deputados.csv", { headers: UA });
+  const leitor = r.body.getReader();
+  const { value } = await leitor.read();
+  await leitor.cancel();
+  console.log("deputados.csv colunas:", new TextDecoder().decode(value).split("\n")[0]);
 }
-for (const [a, id] of [...vistos].slice(0, 40)) console.log("AUT |", id, "|", a);
+{
+  const r = await fetch(`${S}/senador/3830.json`, { headers: { ...UA, Accept: "application/json" } });
+  const d = await r.json();
+  const p = d?.DetalheParlamentar?.Parlamentar ?? {};
+  console.log("senador chaves:", Object.keys(p).join(","));
+  console.log("Identificacao:", JSON.stringify(p.IdentificacaoParlamentar));
+  console.log("DadosBasicos:", JSON.stringify(p.DadosBasicosParlamentar));
+}
