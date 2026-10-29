@@ -6,8 +6,8 @@ import { ListaParlamentares } from "@/components/ListaParlamentares";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
 import { doEstado, ESTADOS } from "@/dados/estados";
-import { estados, listarParlamentares } from "@/lib/dados";
-import { numero } from "@/lib/formato";
+import { emendasDoEstado, estados, listarParlamentares, municipiosDoEstado } from "@/lib/dados";
+import { numero, reais } from "@/lib/formato";
 import styles from "./estado.module.css";
 
 type Props = PageProps<"/estado/[uf]">;
@@ -33,7 +33,10 @@ async function Conteudo({ params }: { params: Props["params"] }) {
   const e = todos.find((x) => x.uf === uf);
   if (!e) notFound();
 
-  const parlamentares = (await listarParlamentares()).filter((p) => p.ativo && p.uf === uf);
+  const [lista, emendas, municipios] = await Promise.all([listarParlamentares(), emendasDoEstado(uf), municipiosDoEstado(uf)]);
+  const parlamentares = lista.filter((p) => p.ativo && p.uf === uf);
+  const nomeMun = new Map(municipios.map((m) => [m.ibge_id, m.nome]));
+  const maiorAno = Math.max(...emendas.porAno.map((a) => a.empenhado), 1);
   const senadores = parlamentares.filter((p) => p.casa === "senado");
   const deputados = parlamentares.filter((p) => p.casa === "camara");
 
@@ -113,6 +116,50 @@ async function Conteudo({ params }: { params: Props["params"] }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className={styles.secao} aria-labelledby="emendas">
+        <h2 id="emendas" className={ui.h2}>
+          Emendas parlamentares destinadas {doEstado(e.uf, e.nome).replace(/^(do|da|de) /, (x) => ({ "do ": "ao ", "da ": "à ", "de ": "a " })[x] ?? x)}
+        </h2>
+        <p className={ui.apoio}>Todas as emendas com destino no estado (individuais, de bancada, de comissão e do relator), por ano. Valor empenhado e pago.</p>
+        <ul className={styles.barras}>
+          {emendas.porAno.map((a) => (
+            <li key={a.ano}>
+              <span className={styles.partido}>{a.ano}</span>
+              <span className={styles.trilho} aria-hidden="true">
+                <span className={styles.barra} style={{ width: `${(a.empenhado / maiorAno) * 100}%` }} />
+              </span>
+              <span className={styles.qtd}>
+                {reais(a.empenhado)} · pago {reais(a.pago)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <h3 className={styles.h3}>Municípios que mais receberam (empenhado, desde 2014)</h3>
+        <ol className={styles.ranking}>
+          {emendas.porMunicipio.map((m) => (
+            <li key={m.municipio_id}>
+              <Link href={`/municipio/${m.municipio_id}`}>{nomeMun.get(m.municipio_id) ?? m.municipio_id}</Link>
+              <span className={styles.qtd}>
+                {reais(m.empenhado)} · {numero(m.emendas)} emendas
+              </span>
+            </li>
+          ))}
+        </ol>
+        <details className={styles.todos}>
+          <summary>Todos os {municipios.length} municípios</summary>
+          <ul>
+            {municipios.map((m) => (
+              <li key={m.ibge_id}>
+                <Link href={`/municipio/${m.ibge_id}`}>{m.nome}</Link>
+              </li>
+            ))}
+          </ul>
+        </details>
+        <p className={ui.fonte}>
+          Fonte: <a href="https://portaldatransparencia.gov.br/download-de-dados/emendas-parlamentares">Portal da Transparência — emendas parlamentares</a>
+        </p>
       </section>
 
       <section className={styles.secao} aria-labelledby="senado">

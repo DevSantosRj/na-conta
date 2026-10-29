@@ -90,6 +90,8 @@
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--cor-borda);
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .aba {

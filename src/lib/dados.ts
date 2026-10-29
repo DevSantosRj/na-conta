@@ -245,3 +245,109 @@ export async function gastosDoParlamentar(ids: string[]) {
     if (data.length < 1000) return linhas;
   }
 }
+
+export type LinhaEmenda = {
+  id: string;
+  codigo: string;
+  ano: number;
+  tipo: string | null;
+  autor: string | null;
+  parlamentar_id: string | null;
+  uf: string | null;
+  municipio_id: number | null;
+  localidade: string | null;
+  funcao: string | null;
+  acao: string | null;
+  valor_empenhado: number;
+  valor_pago: number;
+  valor_rap_pago: number;
+  fonte_url: string;
+};
+
+const COLUNAS_EMENDA =
+  "id, codigo, ano, tipo, autor, parlamentar_id, uf, municipio_id, localidade, funcao, acao, valor_empenhado, valor_pago, valor_rap_pago, fonte_url";
+
+async function todasEmendas(filtro: (q: ReturnType<typeof consultaEmendas>) => ReturnType<typeof consultaEmendas>) {
+  const linhas: LinhaEmenda[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await filtro(consultaEmendas()).order("ano", { ascending: false }).order("id").range(de, de + 999);
+    if (error) throw new Error(error.message);
+    linhas.push(
+      ...(data as LinhaEmenda[]).map((l) => ({
+        ...l,
+        valor_empenhado: Number(l.valor_empenhado),
+        valor_pago: Number(l.valor_pago),
+        valor_rap_pago: Number(l.valor_rap_pago),
+      })),
+    );
+    if (data.length < 1000) return linhas;
+  }
+}
+function consultaEmendas() {
+  return db.from("emendas").select(COLUNAS_EMENDA);
+}
+
+export async function emendasDoParlamentar(ids: string[]) {
+  "use cache";
+  cacheLife("hours");
+  ids.forEach((id) => cacheTag(`parlamentar-${id}`));
+  return todasEmendas((q) => q.in("parlamentar_id", ids));
+}
+
+export type Municipio = { ibge_id: number; nome: string; uf: string; populacao: number | null; populacao_ano: number | null; fonte_url: string };
+
+export async function municipio(ibge: number) {
+  "use cache";
+  cacheLife("days");
+  const { data, error } = await db.from("municipios").select("ibge_id, nome, uf, populacao, populacao_ano, fonte_url").eq("ibge_id", ibge).maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Municipio | null;
+}
+
+export async function nomesDeMunicipios(ibges: number[]) {
+  "use cache";
+  cacheLife("days");
+  const mapa: Record<number, string> = {};
+  for (let i = 0; i < ibges.length; i += 300) {
+    const { data, error } = await db.from("municipios").select("ibge_id, nome").in("ibge_id", ibges.slice(i, i + 300));
+    if (error) throw new Error(error.message);
+    for (const m of data) mapa[m.ibge_id] = m.nome;
+  }
+  return mapa;
+}
+
+export async function municipiosDoEstado(uf: string) {
+  "use cache";
+  cacheLife("days");
+  const lista: Pick<Municipio, "ibge_id" | "nome">[] = [];
+  for (let de = 0; ; de += 1000) {
+    const { data, error } = await db.from("municipios").select("ibge_id, nome").eq("uf", uf).order("nome").range(de, de + 999);
+    if (error) throw new Error(error.message);
+    lista.push(...data);
+    if (data.length < 1000) return lista;
+  }
+}
+
+export async function emendasDoMunicipio(ibge: number) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("emendas");
+  return todasEmendas((q) => q.eq("municipio_id", ibge));
+}
+
+export async function emendasDoEstado(uf: string) {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("emendas");
+  const [porAno, porMunicipio] = await Promise.all([
+    db.from("emendas_por_uf_ano").select("ano, emendas, empenhado, pago").eq("uf", uf).order("ano", { ascending: false }),
+    db.from("emendas_por_municipio").select("municipio_id, emendas, empenhado, pago").eq("uf", uf).order("empenhado", { ascending: false }).limit(15),
+  ]);
+  if (porAno.error) throw new Error(porAno.error.message);
+  if (porMunicipio.error) throw new Error(porMunicipio.error.message);
+  const n = (v: unknown) => Number(v);
+  return {
+    porAno: porAno.data.map((l) => ({ ano: l.ano as number, emendas: n(l.emendas), empenhado: n(l.empenhado), pago: n(l.pago) })),
+    porMunicipio: porMunicipio.data.map((l) => ({ municipio_id: l.municipio_id as number, emendas: n(l.emendas), empenhado: n(l.empenhado), pago: n(l.pago) })),
+  };
+}

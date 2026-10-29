@@ -2,11 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
+import { ResumoEmendas } from "@/components/ResumoEmendas";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
 import {
   buscarParlamentar,
+  emendasDoParlamentar,
   gastosDoParlamentar,
+  nomesDeMunicipios,
   mandatos,
   POR_PAGINA,
   presidenciasDoParlamentar,
@@ -150,6 +153,7 @@ function Abas({ id, aba }: { id: string; aba: string }) {
     { chave: "votacoes", nome: "Votações" },
     { chave: "proposicoes", nome: "Proposições" },
     { chave: "gastos", nome: "Gastos" },
+    { chave: "emendas", nome: "Emendas" },
   ];
   return (
     <nav aria-label="Seções do perfil" className={styles.abas}>
@@ -191,13 +195,28 @@ function Paginacao({ id, aba, pagina, total }: { id: string; aba: string; pagina
 async function Conteudo({ params, searchParams }: Props) {
   const { id } = await params;
   const sp = await searchParams;
-  const aba = sp.aba === "proposicoes" || sp.aba === "gastos" ? sp.aba : "votacoes";
+  const aba = sp.aba === "proposicoes" || sp.aba === "gastos" || sp.aba === "emendas" ? sp.aba : "votacoes";
   const pagina = Math.max(1, Number(sp.pagina) || 1);
   const pe = await pessoa(id);
   if (!pe) notFound();
   const { ids } = pe;
   const duasCasas = ids.length > 1;
   const casaDe = (c: "camara" | "senado") => (duasCasas ? <span className={ui.selo}>{c === "camara" ? "Câmara" : "Senado"}</span> : null);
+
+  if (aba === "emendas") {
+    const linhas = await emendasDoParlamentar(ids);
+    const nomes = await nomesDeMunicipios([...new Set(linhas.map((l) => l.municipio_id).filter((x): x is number => x != null))].sort((a, b) => a - b));
+    return (
+      <>
+        <Abas id={id} aba={aba} />
+        <ResumoEmendas linhas={linhas} modo="autor" nomes={nomes} />
+        <p className={ui.fonte}>
+          Emendas individuais de autoria deste parlamentar no Portal da Transparência. A ligação é feita pelo nome do autor publicado pelo Portal; emendas de
+          bancada ou de comissão não entram aqui.
+        </p>
+      </>
+    );
+  }
 
   if (aba === "gastos") {
     const linhas = await gastosDoParlamentar(ids);
