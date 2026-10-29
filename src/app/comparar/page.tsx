@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { Topo } from "@/components/Topo";
 import ui from "@/components/ui.module.css";
@@ -20,6 +21,7 @@ async function Ficha(id: string) {
   const outra = p.outra_casa_id ? await buscarParlamentar(p.outra_casa_id) : null;
   const ids = [p.id, outra?.id].filter(Boolean).sort() as string[];
   const [resumo, mand, gastos, emendas] = await Promise.all([resumoVotos(ids), mandatos(ids), gastosDoParlamentar(ids), emendasDoParlamentar(ids)]);
+  await connection();
   const ano = new Date().getFullYear() - 1;
   const gastoAno = gastos.filter((g) => g.ano === ano).reduce((s, g) => s + g.valor, 0);
   return {
