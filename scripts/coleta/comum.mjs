@@ -105,9 +105,20 @@ export async function* lerCsvArquivo(endereco, colunas, { zip = false, latin1 = 
   if (!r) return;
   const pasta = mkdtempSync(join(tmpdir(), "na-conta-"));
   const arquivo = join(pasta, zip ? "a.zip" : "a.csv");
-  writeFileSync(arquivo, Buffer.from(await r.arrayBuffer()));
+  const corpo = Buffer.from(await r.arrayBuffer());
+  if (zip && corpo.subarray(0, 2).toString() !== "PK") {
+    throw new Error(`${endereco}: esperava um .zip e veio ${r.headers.get("content-type")} (${corpo.length} bytes): ${corpo.subarray(0, 120).toString()}`);
+  }
+  writeFileSync(arquivo, corpo);
+  let erroUnzip = "";
+  let lidas = 0;
   try {
-    let fluxo = zip ? spawn("unzip", ["-p", arquivo]).stdout : createReadStream(arquivo);
+    let fluxo;
+    if (zip) {
+      const proc = spawn("unzip", ["-p", arquivo]);
+      proc.stderr.on("data", (d) => (erroUnzip += d));
+      fluxo = proc.stdout;
+    } else fluxo = createReadStream(arquivo);
     if (latin1) {
       const dec = new TextDecoder("latin1");
       fluxo = fluxo.pipe(new Transform({ transform: (pedaco, _c, feito) => feito(null, dec.decode(pedaco, { stream: true })) }));
@@ -116,10 +127,16 @@ export async function* lerCsvArquivo(endereco, colunas, { zip = false, latin1 = 
       parse({ delimiter: ";", bom: true, columns: true, relax_quotes: true, relax_column_count: true, skip_empty_lines: true, from_line: pularLinhas + 1 }),
     );
     for await (const linha of leitor) {
+      lidas++;
+      if (lidas === 1) {
+        const faltando = colunas.filter((c) => !(c in linha));
+        if (faltando.length) throw new Error(`${endereco}: colunas ausentes: ${faltando.join(", ")} · presentes: ${Object.keys(linha).slice(0, 12).join(", ")}`);
+      }
       const so = {};
       for (const c of colunas) so[c] = linha[c] ?? "";
       yield so;
     }
+    if (!lidas) throw new Error(`${endereco}: nenhuma linha lida${erroUnzip ? ` (unzip: ${erroUnzip.slice(0, 300)})` : ""}`);
   } finally {
     rmSync(pasta, { recursive: true, force: true });
   }
