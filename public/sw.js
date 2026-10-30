@@ -2,7 +2,7 @@
 // Páginas: busca na rede primeiro; sem rede, usa a última cópia guardada ou a página "Sem conexão".
 // Arquivos de /_next/static (nomes mudam a cada versão): guardados na primeira visita.
 // Páginas com dados pessoais (login, alertas) nunca são guardadas.
-const VERSAO = "na-conta-v1";
+const VERSAO = "na-conta-v2";
 const OFFLINE = "/offline";
 const PESSOAIS = /^\/(alertas|entrar|auth)(\/|$)/;
 
@@ -44,10 +44,18 @@ self.addEventListener("fetch", (e) => {
     e.respondWith(
       fetch(req)
         .then((r) => {
-          if (r.ok && !pessoal) caches.open(VERSAO).then((c) => c.put(req, r.clone()));
+          if (r.ok && !pessoal) {
+            const copia = r.clone();
+            e.waitUntil(caches.open(VERSAO).then((c) => c.put(url.pathname + url.search, copia)));
+          }
           return r;
         })
-        .catch(async () => (!pessoal && (await caches.match(req))) || (await caches.match(OFFLINE)) || Response.error()),
+        .catch(
+          async () =>
+            (!pessoal && (await caches.match(url.pathname + url.search, { ignoreVary: true }))) ||
+            (await caches.match(OFFLINE, { ignoreVary: true })) ||
+            Response.error(),
+        ),
     );
   }
 });

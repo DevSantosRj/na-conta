@@ -17,6 +17,13 @@ await pag.goto(`${BASE}/estado/rj`, { waitUntil: "networkidle" });
 const controlado = await pag.evaluate(() => !!navigator.serviceWorker?.controller);
 ok("service worker ativo", controlado);
 
+await pag.waitForTimeout(1500);
+const guardadas = await pag.evaluate(async () => {
+  const lista = [];
+  for (const n of await caches.keys()) for (const r of await (await caches.open(n)).keys()) lista.push(new URL(r.url).pathname);
+  return lista.filter((p) => !p.startsWith("/_next"));
+});
+linhas.push(`(páginas guardadas no aparelho: ${guardadas.join(", ")})`);
 await ctx.setOffline(true);
 await pag.goto(`${BASE}/estado/rj`).catch(() => {});
 const t1 = await pag.locator("h1").first().textContent().catch(() => "");
