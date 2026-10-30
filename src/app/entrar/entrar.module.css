@@ -106,3 +106,11 @@
   color: var(--cor-sucesso);
   font-weight: 600;
 }
+
+.armadilha {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}

@@ -21,6 +21,13 @@ export default function Privacidade() {
           Se você assina os alertas, guardamos apenas o seu e-mail, quem você segue e a frequência do resumo. Ninguém além
           de você vê esses dados.
         </li>
+        <li>
+          Para evitar abuso, cada pedido de link de acesso registra por 1 dia um código embaralhado (hash) do e-mail e da conexão, sem
+          guardar o e-mail ou o endereço IP em si.
+        </li>
+        <li>
+          As páginas que você abre ficam guardadas no seu aparelho para funcionar sem internet; as telas de login e de alertas nunca ficam.
+        </li>
         <li>Você pode deixar de seguir, descadastrar pelo próprio e-mail ou apagar sua conta a qualquer momento.</li>
         <li>O estado que você escolhe no primeiro acesso fica salvo só no seu aparelho.</li>
         <li>Todos os dados de políticos vêm de fontes oficiais e abertas, com o link de origem ao lado.</li>

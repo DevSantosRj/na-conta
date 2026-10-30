@@ -20,6 +20,8 @@ export function Formulario({ proximo }: { proximo: string }) {
   return (
     <form action={enviar} className={styles.form} noValidate>
       <input type="hidden" name="proximo" value={proximo} />
+      {/* Armadilha para robôs: invisível e fora da navegação por teclado */}
+      <input type="text" name="site" tabIndex={-1} autoComplete="off" aria-hidden="true" className={styles.armadilha} />
       <label htmlFor="email" className={styles.rotulo}>
         Seu e-mail
       </label>
