@@ -79,7 +79,7 @@ export default function Municipio(props: Props) {
     <>
       <Topo />
       <main className={ui.pagina}>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 640, marginTop: 16 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 640, marginTop: 16 }} aria-label="Carregando" />}>
           <Conteudo params={props.params} />
         </Suspense>
       </main>

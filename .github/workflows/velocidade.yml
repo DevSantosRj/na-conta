@@ -1,4 +1,4 @@
-name: Velocidade (Lighthouse no celular)
+name: Velocidade e modo avião (celular)
 
 on:
   workflow_dispatch:
@@ -16,9 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
         with:
           node-version: 22
+      - name: Teste sem internet (modo avião)
+        env:
+          BASE: ${{ inputs.base }}
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium
+          node scripts/testes/sem-internet.mjs | tee sem-internet.txt
       - name: Medir
         env:
           BASE: ${{ inputs.base }}
@@ -52,6 +60,6 @@ jobs:
           git init -q r && cd r
           git config user.name "na-conta-velocidade"
           git config user.email "na-conta-velocidade@users.noreply.github.com"
-          cp ../velocidade.txt .
-          git add velocidade.txt && git commit -qm "Lighthouse $(date -u +%Y-%m-%dT%H:%MZ)"
+          cp ../velocidade.txt ../sem-internet.txt .
+          git add velocidade.txt sem-internet.txt && git commit -qm "Lighthouse $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:velocidade

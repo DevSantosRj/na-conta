@@ -57,7 +57,7 @@ export default function Constituicao() {
       <main className={ui.pagina}>
         <h1 className={ui.h1}>Constituição em linguagem simples</h1>
         <p className={ui.apoio}>Os artigos que explicam o que você vê no Na Conta: cadeiras por estado, mandatos, orçamento, emendas e repartição de impostos.</p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 240, marginTop: 20 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 240, marginTop: 20 }} aria-label="Carregando" />}>
           <Artigos />
         </Suspense>
       </main>

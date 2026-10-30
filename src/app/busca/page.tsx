@@ -94,7 +94,7 @@ export default function Busca(props: PageProps<"/busca">) {
       <main className={ui.pagina}>
         <h1 className={ui.h1}>Busca</h1>
         <p className={ui.apoio}>Parlamentares, cidades e projetos de lei num lugar só.</p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 240, marginTop: 20 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 240, marginTop: 20 }} aria-label="Carregando" />}>
           <Resultados searchParams={props.searchParams} />
         </Suspense>
       </main>

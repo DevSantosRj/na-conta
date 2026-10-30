@@ -100,7 +100,7 @@ export default function Parlamentares({ searchParams }: PageProps<"/parlamentare
       <main className={ui.pagina}>
         <h1 className={ui.h1}>Parlamentares</h1>
         <p className={ui.apoio}>513 deputados federais e 81 senadores em exercício. Toque em um nome para ver votos e proposições.</p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 420, marginTop: 20 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 420, marginTop: 20 }} aria-label="Carregando" />}>
           <Resultados searchParams={searchParams} />
         </Suspense>
         <p className={ui.fonte}>Fontes: Câmara dos Deputados e Senado Federal (dados abertos).</p>

@@ -132,7 +132,7 @@ export default function Comparar(props: PageProps<"/comparar">) {
       <main className={ui.pagina}>
         <h1 className={ui.h1}>Comparar parlamentares</h1>
         <p className={ui.apoio}>Escolha dois deputados ou senadores em exercício e veja os números lado a lado.</p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 420, marginTop: 20 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 420, marginTop: 20 }} aria-label="Carregando" />}>
           <Conteudo searchParams={props.searchParams} />
         </Suspense>
       </main>

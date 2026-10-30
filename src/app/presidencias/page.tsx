@@ -200,7 +200,7 @@ export default function Presidencias(props: PageProps<"/presidencias">) {
       <main className={ui.pagina}>
         <h1 className={ui.h1}>Presidências</h1>
         <p className={ui.apoio}>Quem preside a República, a Câmara e o Senado — hoje e desde o início — com a fonte oficial ao lado.</p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 640, marginTop: 24 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 640, marginTop: 24 }} aria-label="Carregando" />}>
           <Conteudo searchParams={props.searchParams} />
         </Suspense>
       </main>

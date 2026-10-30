@@ -166,7 +166,7 @@ export default function Pagina({ searchParams }: PageProps<"/pacto-federativo">)
           Quanto de tributo federal é arrecadado em cada estado e quanto a União repassa de volta, por obrigação constitucional, ao governo do
           estado e às prefeituras.
         </p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 480, marginTop: 20 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 480, marginTop: 20 }} aria-label="Carregando" />}>
           <Conteudo searchParams={searchParams} />
         </Suspense>
 

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -65,8 +66,7 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
     <>
       <div className={styles.cabecalho}>
         {p.foto_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.foto_url} alt={`Foto oficial de ${p.nome_parlamentar}`} width={88} height={88} className={styles.foto} />
+                    <Image src={p.foto_url} alt={`Foto oficial de ${p.nome_parlamentar}`} width={88} height={88} sizes="88px" className={styles.foto} priority />
         ) : (
           <span className={styles.foto} aria-hidden="true" />
         )}
@@ -419,10 +419,10 @@ export default function Parlamentar(props: Props) {
         <p className={ui.trilha}>
           <Link href="/parlamentares">← Parlamentares</Link>
         </p>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 260, marginTop: 16 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 260, marginTop: 16 }} aria-label="Carregando" />}>
           <Cabecalho params={props.params} />
         </Suspense>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 480, marginTop: 24 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 480, marginTop: 24 }} aria-label="Carregando" />}>
           <Conteudo {...props} />
         </Suspense>
       </main>

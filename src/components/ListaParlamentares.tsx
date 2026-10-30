@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Parlamentar } from "@/lib/dados";
 import styles from "@/app/parlamentares/parlamentares.module.css";
@@ -11,8 +12,7 @@ export function ListaParlamentares({ itens }: { itens: Item[] }) {
         <li key={p.id}>
           <Link href={`/parlamentar/${p.id}`} className={styles.item}>
             {p.foto_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={p.foto_url} alt="" width={44} height={44} className={styles.foto} loading="lazy" />
+                            <Image src={p.foto_url} alt="" width={44} height={44} sizes="44px" className={styles.foto} />
             ) : (
               <span className={styles.foto} aria-hidden="true" />
             )}

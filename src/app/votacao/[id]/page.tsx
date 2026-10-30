@@ -131,7 +131,7 @@ export default function PaginaVotacao(props: Props) {
     <>
       <Topo />
       <main className={ui.pagina}>
-        <Suspense fallback={<div className={ui.esqueleto} style={{ height: 520 }} aria-label="Carregando" />}>
+        <Suspense fallback={<div className={ui.esqueleto} style={{ minHeight: "100svh", height: 520 }} aria-label="Carregando" />}>
           <Votacao {...props} />
         </Suspense>
       </main>
