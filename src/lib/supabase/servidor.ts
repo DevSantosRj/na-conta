@@ -2,6 +2,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { connection } from "next/server";
+import { fetchComRepeticao } from "./repetir";
 
 // Cliente do Supabase para o servidor, com a sessão do leitor guardada em cookies.
 // Usa só a chave pública: o que cada leitor pode ver é decidido pelas regras RLS do banco.
@@ -10,6 +11,7 @@ export async function supabaseServidor() {
   await connection();
   const loja = await cookies();
   return createServerClient(process.env.SUPABASE_URL!, process.env.SUPABASE_PUBLISHABLE_KEY!, {
+    global: { fetch: fetchComRepeticao },
     cookies: {
       getAll: () => loja.getAll(),
       setAll: (lista) => {

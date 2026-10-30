@@ -1,0 +1,11 @@
+.aviso {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 10px var(--margem);
+  background: #15171a;
+  color: #f5f4ef;
+  font-size: 14px;
+  text-align: center;
+}

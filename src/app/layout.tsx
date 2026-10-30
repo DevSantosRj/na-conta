@@ -8,6 +8,7 @@ import "@fontsource/ibm-plex-sans/600.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-serif/400.css";
 import "./globals.css";
+import { Conexao } from "@/components/Conexao";
 import { Rodape } from "@/components/Rodape";
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR">
       <body>
+        <Conexao />
         {children}
         <Rodape />
       </body>
