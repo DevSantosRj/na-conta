@@ -66,7 +66,7 @@ async function Cabecalho({ params }: { params: Props["params"] }) {
     <>
       <div className={styles.cabecalho}>
         {p.foto_url ? (
-                    <Image src={p.foto_url} alt={`Foto oficial de ${p.nome_parlamentar}`} width={88} height={88} sizes="88px" className={styles.foto} priority />
+                    <Image src={p.foto_url} alt={`Foto oficial de ${p.nome_parlamentar}`} width={88} height={88} className={styles.foto} priority />
         ) : (
           <span className={styles.foto} aria-hidden="true" />
         )}

@@ -12,7 +12,7 @@ export function ListaParlamentares({ itens }: { itens: Item[] }) {
         <li key={p.id}>
           <Link href={`/parlamentar/${p.id}`} className={styles.item}>
             {p.foto_url ? (
-                            <Image src={p.foto_url} alt="" width={44} height={44} sizes="44px" className={styles.foto} />
+                            <Image src={p.foto_url} alt="" width={44} height={44} className={styles.foto} />
             ) : (
               <span className={styles.foto} aria-hidden="true" />
             )}
