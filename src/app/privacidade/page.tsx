@@ -18,6 +18,10 @@ export default function Privacidade() {
       <ul className={styles.texto}>
         <li>Para ler o site você não precisa de cadastro, e não usamos cookies de rastreamento.</li>
         <li>
+          Contamos visitas com o Vercel Web Analytics, que não usa cookies nem identifica você: registra só a página aberta, o país e o tipo
+          de aparelho, de forma agregada.
+        </li>
+        <li>
           Se você assina os alertas, guardamos apenas o seu e-mail, quem você segue e a frequência do resumo. Ninguém além
           de você vê esses dados.
         </li>

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next";
 
 // Fontes servidas pelo próprio site (sem chamadas a terceiros)
 import "@fontsource/space-grotesk/500.css";
@@ -35,6 +36,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Conexao />
         {children}
         <Rodape />
+        {/* Contador de visitas da Vercel: sem cookies, sem identificar ninguém */}
+        <Analytics />
       </body>
     </html>
   );
