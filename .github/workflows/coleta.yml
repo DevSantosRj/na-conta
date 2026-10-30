@@ -16,6 +16,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: coleta
@@ -40,3 +41,23 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANOS: ${{ inputs.anos }}
           FONTES: ${{ inputs.fontes }}
+      # Aviso para o Marcos: abre um aviso (issue) "Coleta falhou" ou comenta no que já estiver aberto.
+      # O GitHub manda e-mail para quem acompanha o repositório.
+      - name: Avisar falha
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          execucao="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "A coleta de $(date -u +%d/%m/%Y) falhou. Execução: $execucao"
+            echo
+            if [ -s coleta-falhas.md ]; then cat coleta-falhas.md; else echo "O robô parou antes de registrar as etapas (veja o log da execução)."; fi
+          } > aviso.md
+          aberto=$(gh issue list --repo "${{ github.repository }}" --label coleta-falhou --state open --json number --jq '.[0].number')
+          if [ -n "$aberto" ]; then
+            gh issue comment "$aberto" --repo "${{ github.repository }}" --body-file aviso.md
+          else
+            gh label create coleta-falhou --repo "${{ github.repository }}" --color B60205 --description "Robô de coleta com erro" 2>/dev/null || true
+            gh issue create --repo "${{ github.repository }}" --title "Coleta falhou" --label coleta-falhou --assignee DevSantosRj --body-file aviso.md
+          fi

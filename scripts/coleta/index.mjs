@@ -29,14 +29,22 @@ const anos = process.env.ANOS
   ? process.env.ANOS.split(",").map(Number)
   : Array.from({ length: hoje - 2023 + 1 }, (_, i) => 2023 + i);
 // "conferir" compara os placares gravados com os oficiais (roda por padrão após a coleta)
-const fontes = (process.env.FONTES || "camara,senado,gastos,conferir").split(",");
+const fontes = (process.env.FONTES || "camara,senado,gastos,conferir").split(
+  ",",
+);
 
 let falhas = 0;
+const erros = [];
 async function etapa(nome, fn) {
   try {
     await registrar(nome, fn);
   } catch (e) {
     falhas++;
+    erros.push(
+      `- **${nome}**: ${String(e.message ?? e)
+        .replace(/\s+/g, " ")
+        .slice(0, 400)}`,
+    );
     console.error(`✖ ${nome}: ${e.message}`);
   }
 }
@@ -45,39 +53,54 @@ console.log(`Coleta · anos ${anos.join(", ")} · fontes ${fontes.join(", ")}`);
 
 if (fontes.includes("camara")) {
   await etapa("camara:deputados", camara.deputados);
-  for (const ano of anos) await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
-  for (const ano of anos) await etapa(`camara:votacoes:${ano}`, () => camara.votacoes(ano));
+  for (const ano of anos)
+    await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
+  for (const ano of anos)
+    await etapa(`camara:votacoes:${ano}`, () => camara.votacoes(ano));
   await etapa("camara:vinculos", camara.vincular);
 }
 // Só proposições (anos antes de 2001, quando a Câmara ainda não publicava votos individuais)
 if (fontes.includes("proposicoes")) {
-  for (const ano of anos) await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
+  for (const ano of anos)
+    await etapa(`camara:proposicoes:${ano}`, () => camara.proposicoes(ano));
   await etapa("camara:vinculos", camara.vincular);
 }
 if (fontes.includes("senado")) {
   await etapa("senado:senadores", senado.senadores);
-  for (const ano of anos) await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
+  for (const ano of anos)
+    await etapa(`senado:votacoes:${ano}`, () => senado.votacoes(ano));
   // Rodada diária: só projetos apresentados nos últimos 90 dias
   const desde = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
   await etapa("senado:autorias", () => senado.autorias({ desde }));
 }
 // Carga completa da autoria de projetos dos senadores (toda a carreira no Senado)
-if (fontes.includes("senado-autorias")) await etapa("senado:autorias:completa", () => senado.autorias());
+if (fontes.includes("senado-autorias"))
+  await etapa("senado:autorias:completa", () => senado.autorias());
 
-if (fontes.includes("presidencias")) await etapa("presidencias", presidencias.carregar);
+if (fontes.includes("presidencias"))
+  await etapa("presidencias", presidencias.carregar);
 if (fontes.includes("ibge")) await etapa("ibge:populacao", ibge.populacao);
 // Emendas (Portal da Transparência): arquivo único com todos os anos; na rodada diária, só às segundas
-if (fontes.includes("emendas") || (!process.env.FONTES && new Date().getUTCDay() === 1)) await etapa("emendas", emendas.carregar);
+if (
+  fontes.includes("emendas") ||
+  (!process.env.FONTES && new Date().getUTCDay() === 1)
+)
+  await etapa("emendas", emendas.carregar);
 // Cota parlamentar: soma por mês e categoria (Câmara e Senado)
 // Pacto federativo: toda segunda-feira na rodada normal, ou quando pedido
-if (fontes.includes("federativo") || (!process.env.FONTES && new Date().getUTCDay() === 1)) {
+if (
+  fontes.includes("federativo") ||
+  (!process.env.FONTES && new Date().getUTCDay() === 1)
+) {
   await etapa("federativo:arrecadacao", federativo.arrecadacao);
   await etapa("federativo:transferencias", () => federativo.transferencias());
 }
 
 if (fontes.includes("gastos")) {
-  for (const ano of anos) await etapa(`gastos:camara:${ano}`, () => gastos.camara(ano));
-  for (const ano of anos) await etapa(`gastos:senado:${ano}`, () => gastos.senado(ano));
+  for (const ano of anos)
+    await etapa(`gastos:camara:${ano}`, () => gastos.camara(ano));
+  for (const ano of anos)
+    await etapa(`gastos:senado:${ano}`, () => gastos.senado(ano));
 }
 
 // Liga Câmara e Senado da mesma pessoa (antes da carreira, para os mandatos das fichas novas entrarem)
@@ -99,10 +122,22 @@ if (fontes.includes("partidos") || fontes.includes("carreira")) {
 }
 
 if (fontes.includes("conferir")) {
-  for (const ano of anos.filter((a) => !camara.historico(a))) await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
+  for (const ano of anos.filter((a) => !camara.historico(a)))
+    await etapa(`conferencia:camara:${ano}`, () => conferirCamara(ano));
 }
 
+// Falha proposital, só para testar o aviso de coleta com erro
+if (fontes.includes("teste-aviso"))
+  await etapa("teste-aviso", () => {
+    throw new Error(
+      "falha proposital para testar o aviso (pode fechar este aviso)",
+    );
+  });
+
 if (falhas) {
+  // Resumo lido pelo passo "Avisar falha" do workflow (abre ou comenta um aviso no GitHub)
+  const { writeFileSync } = await import("node:fs");
+  writeFileSync("coleta-falhas.md", erros.join("\n") + "\n");
   console.error(`${falhas} etapa(s) com erro — detalhes na tabela coletas.`);
   process.exit(1);
 }
