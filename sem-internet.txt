@@ -1,0 +1,7 @@
+PASSOU · service worker ativo
+(páginas guardadas no aparelho: /offline, /, /estado/rj)
+PASSOU · sem internet: página já vista abre · título "Rio de Janeiro"
+PASSOU · sem internet: aviso no topo
+PASSOU · sem internet: página nunca vista mostra 'Sem conexão' · título "Sem conexão com a internet"
+PASSOU · sem internet: Meus alertas não fica guardado · título "Sem conexão com a internet"
+PASSOU · internet de volta: página carrega · título "Acre"

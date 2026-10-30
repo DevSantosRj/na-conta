@@ -1,0 +1,40 @@
+https://na-conta-mu.vercel.app/
+  desempenho 99 · acessibilidade 100 · boas práticas 100 · SEO 100
+  LCP 2.0s · FCP 1.1s · TBT 50ms · CLS 0.028 · peso 256KB
+    - unused-javascript: Reduce unused JavaScript (Est savings of 30 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+
+https://na-conta-mu.vercel.app/busca?q=saude
+  desempenho 93 · acessibilidade 100 · boas práticas 100 · SEO 100
+  LCP 2.3s · FCP 1.1s · TBT 60ms · CLS 0.119 · peso 258KB
+    - render-blocking-resources: Eliminate render-blocking resources (Est savings of 120 ms)
+    - unused-javascript: Reduce unused JavaScript (Est savings of 30 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+
+https://na-conta-mu.vercel.app/estado/rj
+  desempenho 94 · acessibilidade 100 · boas práticas 100 · SEO 100
+  LCP 2.4s · FCP 1.2s · TBT 62ms · CLS 0.119 · peso 261KB
+    - unused-javascript: Reduce unused JavaScript (Est savings of 30 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+
+https://na-conta-mu.vercel.app/meu-imposto
+  desempenho 95 · acessibilidade 100 · boas práticas 100 · SEO 100
+  LCP 1.7s · FCP 1.2s · TBT 110ms · CLS 0.119 · peso 259KB
+    - unused-javascript: Reduce unused JavaScript (Est savings of 30 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+
+https://na-conta-mu.vercel.app/pacto-federativo
+  desempenho 96 · acessibilidade 100 · boas práticas 100 · SEO 100
+  LCP 1.8s · FCP 1.1s · TBT 52ms · CLS 0.119 · peso 259KB
+    - render-blocking-resources: Eliminate render-blocking resources (Est savings of 250 ms)
+    - unused-javascript: Reduce unused JavaScript (Est savings of 30 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+
+https://na-conta-mu.vercel.app/parlamentar/C-74848
+  desempenho 95 · acessibilidade 100 · boas práticas 100 · SEO 91
+  LCP 2.3s · FCP 0.9s · TBT 49ms · CLS 0.119 · peso 277KB
+    - render-blocking-resources: Eliminate render-blocking resources (Est savings of 100 ms)
+    - unused-javascript: Reduce unused JavaScript (Est savings of 28 KiB)
+    - legacy-javascript: Avoid serving legacy JavaScript to modern browsers (Est savings of 14 KiB)
+    - meta-description: Document does not have a meta description
+
