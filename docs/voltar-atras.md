@@ -11,7 +11,7 @@ A Vercel guarda todas as versões publicadas. Voltar para a anterior leva segund
 3. Confirme. O endereço do site passa a mostrar a versão antiga na hora.
 4. Depois, corrija o código e publique de novo. Enquanto o rollback estiver ativo, a Vercel não troca a produção sozinha: a nova versão precisa ser promovida (ou o rollback desfeito) na mesma tela.
 
-Testado em 30/10/2026: versão com erro proposital revertida em menos de 1 minuto (ver Planta, etapa 6).
+Testado em 30/10/2026: versão com erro proposital no ar, revertida pela Vercel sem novo build (ver Planta, etapa 6). Também ficou comprovado que uma versão que nem compila não chega ao ar: a Vercel mantém a anterior.
 
 ## 2. Mudança no banco que deu errado
 

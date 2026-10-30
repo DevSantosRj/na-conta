@@ -6,7 +6,7 @@ Mostramos o dado bruto, a fonte e o método. A conclusão é de quem lê.
 
 ## Situação
 
-Em construção — etapa 1 de 6 (projeto no ar num link de teste).
+Em construção — etapas 1 a 5 de 6 concluídas; etapa 6 (lançamento) em andamento.
 
 | Etapa | O que entra |
 | --- | --- |

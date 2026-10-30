@@ -2,19 +2,45 @@ import Link from "next/link";
 import { MapaBrasil } from "@/components/MapaBrasil";
 import styles from "./page.module.css";
 
+// Situação de cada etapa do plano (atualizada à mão a cada etapa concluída)
 const ETAPAS = [
-  { n: 1, nome: "Projeto no ar num link de teste", status: "concluída" },
-  { n: 2, nome: "Banco, primeiros dados e login", status: "concluída" },
-  { n: 3, nome: "Perfil do parlamentar e alertas", status: "em andamento" },
-  { n: 4, nome: "Mapa, estados, emendas, Constituição e Meu imposto", status: "" },
-  { n: 5, nome: "Erros, segurança e velocidade", status: "" },
-  { n: 6, nome: "Lançamento", status: "" },
+  { n: 1, nome: "Projeto no ar", status: "concluída", feito: "Site publicado, código aberto e proteção contra vazamento de chaves." },
+  { n: 2, nome: "Banco, dados e login", status: "concluída", feito: "Robôs da Câmara e do Senado toda madrugada; login por link no e-mail." },
+  {
+    n: 3,
+    nome: "Parlamentares e alertas",
+    status: "concluída",
+    feito: "Perfis com votos, projetos, gastos, emendas e carreira; seguir parlamentares; cartão para compartilhar.",
+  },
+  {
+    n: 4,
+    nome: "Estados, cidades e ferramentas",
+    status: "concluída",
+    feito: "Mapa, estados, municípios, pacto federativo, presidências, busca, comparador e Meu imposto.",
+  },
+  {
+    n: 5,
+    nome: "Erros, segurança e velocidade",
+    status: "concluída",
+    feito: "Funciona sem internet, regras de acesso revisadas, nota acima de 90 no teste de velocidade do Google.",
+  },
+  { n: 6, nome: "Lançamento", status: "em andamento", feito: "Contador de visitas sem cookies e plano para voltar atrás em menos de 1 minuto." },
+];
+
+// O que ainda falta antes de abrir para todo mundo
+const FALTA = [
+  "Alertas por e-mail de quem você segue",
+  "Resumo simples de cada projeto de lei, ao lado da ementa oficial",
+  "Constituição explicada, revisada por advogado",
+  "Histórico de ex-parlamentares",
+  "Endereço próprio (domínio)",
+  "Teste fechado com cerca de 20 pessoas",
 ];
 
 const MODULOS = [
-  { titulo: "Como votou", texto: "Cada votação nominal de deputados e senadores, por tema." },
+  { titulo: "Como votou", texto: "Cada votação nominal de deputados (desde 2003) e senadores (desde 1991)." },
   { titulo: "Presidências", texto: "Quem preside a República, a Câmara e o Senado hoje, todos os anteriores e como funciona o presidencialismo." },
-  { titulo: "Proposições", texto: "Tudo o que cada parlamentar propôs, com resumo automático ao lado da ementa oficial." },
+  { titulo: "Proposições", texto: "Tudo o que cada parlamentar propôs, com a ementa oficial. Em breve, um resumo simples ao lado." },
   { titulo: "Gastos e emendas", texto: "Cota parlamentar e emendas: quanto foi indicado, para qual cidade, quanto foi pago." },
   { titulo: "Meu imposto", texto: "Quanto sai do seu salário para o INSS e para o imposto de renda, passo a passo, com as tabelas oficiais." },
   { titulo: "Pacto federativo", texto: "O que cada estado arrecada e o que recebe da União, com a regra da Constituição ao lado." },
@@ -90,11 +116,20 @@ export default function Inicio() {
                 {ETAPAS.map((e) => (
                   <li key={e.n} className={styles.etapa} data-status={e.status || undefined}>
                     <span className={styles.etapaNumero}>{e.n}</span>
-                    <span className={styles.etapaNome}>{e.nome}</span>
+                    <span className={styles.etapaNome}>
+                      {e.nome}
+                      <span className={styles.etapaFeito}>{e.feito}</span>
+                    </span>
                     {e.status && <span className={styles.etapaStatus}>{e.status}</span>}
                   </li>
                 ))}
               </ol>
+              <h3 className={styles.h3Falta}>Falta para o lançamento</h3>
+              <ul className={styles.falta}>
+                {FALTA.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>

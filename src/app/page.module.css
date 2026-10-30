@@ -178,7 +178,7 @@
 
 .etapa {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid var(--cor-borda);
@@ -275,4 +275,34 @@
   padding-bottom: 24px;
   font-size: 14px;
   color: var(--cor-texto-3);
+}
+
+.etapaFeito {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--cor-texto-3);
+}
+
+.etapa[data-status="concluída"] .etapaNumero {
+  background: var(--cor-texto);
+  color: var(--cor-fundo);
+}
+
+.h3Falta {
+  margin: 20px 0 0;
+  font-family: var(--fonte-titulo);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.falta {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--cor-texto-2);
 }
