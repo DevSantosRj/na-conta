@@ -1,0 +1,57 @@
+name: Velocidade (Lighthouse no celular)
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Endereço do site"
+        required: false
+        default: "https://na-conta-mu.vercel.app"
+
+permissions:
+  contents: write
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Medir
+        env:
+          BASE: ${{ inputs.base }}
+        run: |
+          mkdir -p res
+          for p in / /parlamentar/C-74848 /estado/rj /pacto-federativo /busca?q=saude /meu-imposto; do
+            nome=$(echo "$p" | tr '/?=' '___')
+            # 3 rodadas por página, fica a mediana (o Lighthouse varia de uma rodada para outra)
+            for i in 1 2 3; do
+              npx -y lighthouse@12 "$BASE$p" --form-factor=mobile --only-categories=performance,accessibility,best-practices,seo \
+                --chrome-flags="--headless=new --no-sandbox" --output=json --output-path="res/$nome-$i.json" --quiet || true
+            done
+          done
+          node -e '
+            const fs=require("fs");const por={};
+            for (const f of fs.readdirSync("res")) { const j=JSON.parse(fs.readFileSync("res/"+f)); const k=j.finalDisplayedUrl||j.requestedUrl; (por[k]??=[]).push(j); }
+            const med=(a)=>a.slice().sort((x,y)=>x-y)[Math.floor(a.length/2)];
+            let out="";
+            for (const [url,js] of Object.entries(por)) {
+              const c=(n)=>Math.round(med(js.map(j=>(j.categories[n]?.score??0)*100)));
+              const a=(n)=>med(js.map(j=>j.audits[n]?.numericValue??0));
+              out+=`${url}\n  desempenho ${c("performance")} · acessibilidade ${c("accessibility")} · boas práticas ${c("best-practices")} · SEO ${c("seo")}\n`;
+              out+=`  LCP ${(a("largest-contentful-paint")/1000).toFixed(1)}s · FCP ${(a("first-contentful-paint")/1000).toFixed(1)}s · TBT ${Math.round(a("total-blocking-time"))}ms · CLS ${a("cumulative-layout-shift").toFixed(3)} · peso ${Math.round(a("total-byte-weight")/1024)}KB\n`;
+              const j=js[0];
+              const falhas=Object.values(j.audits).filter(x=>x.score!==null&&x.score<0.9&&["opportunity","diagnostic"].includes(x.details?.type??"")||(x.score!==null&&x.score<0.9&&x.scoreDisplayMode==="binary")).map(x=>`    - ${x.id}: ${x.title}${x.displayValue?" ("+x.displayValue+")":""}`).slice(0,15);
+              out+=falhas.join("\n")+"\n\n";
+            }
+            fs.writeFileSync("velocidade.txt",out);console.log(out);'
+      - name: Guardar resultado no ramo "velocidade"
+        run: |
+          git init -q r && cd r
+          git config user.name "na-conta-velocidade"
+          git config user.email "na-conta-velocidade@users.noreply.github.com"
+          cp ../velocidade.txt .
+          git add velocidade.txt && git commit -qm "Lighthouse $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -fq "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:velocidade
